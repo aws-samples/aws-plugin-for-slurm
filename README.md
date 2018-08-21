@@ -30,3 +30,5 @@ You can optionally add an EFS endpoint so that all ephemeral SLURM compute nodes
     AllowedValues:
       - 17.11.8
 ```
+
+3) Open the AWS Cloudformation Console and upload the slurm_headnode_cloudformation.yml under the Cloudformation -> Create Stack

@@ -158,7 +158,7 @@ Resources:
         - Key: Name
           Value: SLURM Compute Subnet 1
 
-    PrivateSubnet2:
+   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
@@ -170,7 +170,7 @@ Resources:
         - Key: Name
           Value: SLURM Compute Subnet 2
 
-    PrivateSubnet3:
+  PrivateSubnet3:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
