@@ -56,12 +56,6 @@ Parameters:
       - d2.xlarge
       - d2.2xlarge
 
-
-  MaxSLURMClusterSize:
-    Description: Max number of instances that can be provisioned for the cluster
-    Default: 0
-    Type: Number
-
   SLURMComputeIPRange:
     Description: SLURM IP Range for compute instances format ip-[]-[]-[]-[] for example ip-172-0-1-[100-255]
     Default: ip-10-0-1-[6-250]
