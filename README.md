@@ -15,3 +15,9 @@ You will need an AWS Account with S3 Read/Write permissions. As well as the abil
 </p>
 
 You can optionally add an EFS endpoint so that all ephemeral SLURM compute nodes and the headnode can have a common namespace.
+
+## Instructions
+
+1) Clone the github and sync the contents into a S3 bucket which will be used later to stand up the cluster.
+2) Download the SLURM source from SchedMD [here](https://www.schedmd.com/downloads.php) and copy into the S3 bucket created earlier.
+3) 
