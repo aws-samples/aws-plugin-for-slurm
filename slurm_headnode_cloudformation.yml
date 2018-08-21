@@ -25,7 +25,7 @@ Parameters:
       - 17.11.8
 
   SlurmMInstanceType:
-    Description: Instance type to be used for Slurm Managment Node.
+    Description: Instance type to be used for Slurm Headnode/Management Node.
     Type: String
     Default: c4.large
     AllowedValues:
