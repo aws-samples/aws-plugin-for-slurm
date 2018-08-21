@@ -7,11 +7,11 @@
 export SLURM_HEADNODE=$(curl -sS http://169.254.169.254/latest/meta-data/local-ipv4)
 export AWS_DEFAULT_REGION=$(curl -sS http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk '{print $3}' | sed 's/"//g' | sed 's/,//g')
 AWS_DEFAULT_MAC=$(curl -sS http://169.254.169.254/latest/meta-data/mac)
-export AWS_SUBNET_ID=subnet-58f19d13
+export AWS_SUBNET_ID=@SUBNETID@
 export AWS_SECURITY=$(curl -sS http://169.254.169.254/latest/meta-data/network/interfaces/macs/$AWS_DEFAULT_MAC/security-group-ids)
-export AWS_AMI=<base_ami>
-export AWS_KEYNAME=<key-name>
-export S3BUCKET=<s3-bucket>
+export AWS_AMI=@BASEAMI@
+export AWS_KEYNAME=@KEYNAME@
+export S3BUCKET=@S3BUCKET@
 export SLURM_POWER_LOG=/var/log/power_save.log
 
 ##############################################
@@ -44,7 +44,7 @@ END
                       --security-group-ids $AWS_SECURITY --subnet-id $AWS_SUBNET_ID \
                       --iam-instance-profile Name=s3fullaccess-generic \
                       --user-data file://${TMPFILE} --region $AWS_DEFAULT_REGION --private-ip-address $2 \
-		      --block-device-mappings '[ {"DeviceName":"/dev/sda1","Ebs": {"DeleteOnTermination": true}} ]' \
+		                  --block-device-mappings '[ {"DeviceName":"/dev/sda1","Ebs": {"DeleteOnTermination": true}} ]' \
                       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$1_slurm-compute-processor}]" \
     >> $SLURM_POWER_LOG 2>&1
 
@@ -60,10 +60,13 @@ for host in $hosts
 do
    private_ip=$(nametoip $host)
    if [[ $host == *ip-10-0-1* ]]; then
-      aws_startup $host $private_ip p3.2xlarge
+      export AWS_SUBNET_ID=@PRIVATE1@
+      aws_startup $host $private_ip c4.2xlarge
    elif [[ $host == *ip-10-0-2* ]]; then
+      export AWS_SUBNET_ID=@PRIVATE2@
       aws_startup $host $private_ip c4.2xlarge
    elif [[ $host == *ip-10-0-3* ]]; then
+      export AWS_SUBNET_ID=@PRIVATE3@
       aws_startup $host $private_ip c4.2xlarge
    fi
 
