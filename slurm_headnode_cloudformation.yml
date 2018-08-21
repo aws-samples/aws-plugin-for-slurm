@@ -1,0 +1,397 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy a Basic Autoscaled SLURM Cluster
+
+Parameters:
+  S3Bucket:
+    Description: Basic SLURM Cluster S3
+    Default: s3://slurm-common
+    Type: String
+
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+
+  SlurmVersion:
+    Description: Select SLURM version to install
+    Type: String
+    Default: 17.11.8
+    AllowedValues:
+      - 17.11.8
+
+  SlurmMInstanceType:
+    Description: Instance type to be used for Slurm Managment Node.
+    Type: String
+    Default: c4.large
+    AllowedValues:
+      - t2.xlarge
+      - t2.2xlarge
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - x1.16xlarge
+      - x1.32xlarge
+      - r4.large
+      - r4.2xlarge
+      - r4.4xlarge
+      - r4.8xlarge
+      - r4.16xlarge
+      - i3.large
+      - i3.xlarge
+      - i3.2xlarge
+      - i3.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+
+  SlurmCInstanceType:
+    Description: Instance type to be used for Slurm Compute Node.
+    Type: String
+    Default: c4.large
+    AllowedValues:
+      - t2.xlarge
+      - t2.2xlarge
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - x1.16xlarge
+      - x1.32xlarge
+      - r4.large
+      - r4.2xlarge
+      - r4.4xlarge
+      - r4.8xlarge
+      - r4.16xlarge
+      - i3.large
+      - i3.xlarge
+      - i3.2xlarge
+      - i3.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+
+  MaxSLURMClusterSize:
+    Description: Max number of instances that can be provisioned for the cluster
+    Default: 0
+    Type: Number
+
+  SLURMComputeIPRange:
+    Description: SLURM IP Range for compute instances format ip-[]-[]-[]-[] for example ip-172-0-1-[100-255]
+    Default: ip-10-0-1-[6-250]
+    Type: String
+
+  CreateProdResources:
+    Description:
+      Create in Development (1 AZ,1 Subnet), POC Enviroment (1 AZ,2 Subnets), Production (2 AZ,4 Subnets)
+    Default: hpc-poc
+    Type: String
+    AllowedValues: [hpc-test, hpc-prod, hpc-poc]
+
+Conditions:
+  ShouldCreateResource: !Or [!Equals [hpc-prod, !Ref CreateProdResources],!Equals [hpc-poc, !Ref CreateProdResources] ]
+  hpctestCondition: !Equals [ hpc-test, !Ref CreateProdResources ]
+
+Mappings:
+  RegionMap:
+     us-east-1:
+        AMI:                                      ami-db48ada1
+     us-west-1:
+        AMI:                                      ami-8a6751ea
+     us-west-2:
+        AMI:                                      ami-e535c59d
+     sa-east-1:
+        AMI:                                      ami-c1dbadad
+     ap-southeast-2:
+        AMI:                                      ami-d8b3aabb
+     ap-southeast-1:
+        AMI:                                      ami-5ed8433d
+     ap-northeast-1:
+        AMI:                                      ami-84e316e2
+     eu-west-1:
+        AMI:                                      ami-5f76b626
+     eu-central-1:
+        AMI:                                      ami-2540f74a
+
+Resources:
+  SlurmManagementEC2WaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT30M
+        Count: 1
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: HPC VPC
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: HPC Internet Gateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      MapPublicIpOnLaunch: true
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: !Select
+        - '0'
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: Public Subnet 1
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Public Route Table
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Condition: ShouldCreateResource
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select
+        - '0'
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: Private Subnet 1
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Condition: ShouldCreateResource
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: Private Route Table
+
+  NATEIP:
+    Type: AWS::EC2::EIP
+    Condition: ShouldCreateResource
+    Properties:
+      Domain: vpc
+
+  PublicNAT:
+    DependsOn: AttachGateway
+    Type: AWS::EC2::NatGateway
+    Condition: ShouldCreateResource
+    Properties:
+      AllocationId: !GetAtt NATEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  PrivateRoute:
+    DependsOn: PublicNAT
+    Type: AWS::EC2::Route
+    Condition: ShouldCreateResource
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref PublicNAT
+
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: ShouldCreateResource
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  InstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH Access to Instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: 0.0.0.0/0
+
+  SlurmClusterSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Slurm cluster node ruleset
+      VpcId: !Ref VPC
+
+  SlurmSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+        GroupId: !Ref SlurmClusterSG
+        IpProtocol: -1
+        FromPort: 1
+        ToPort: 65535
+        SourceSecurityGroupId: !Ref SlurmClusterSG
+
+  SlurmRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SlurmHeadnodeRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                - 'ec2.amazonaws.com'
+              Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+      - PolicyName: SlurmS3
+        PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                Resource: '*'
+      - PolicyName: SlurmEC2
+        PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource: '*'
+      - PolicyName: SlurmIAM
+        PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'iam:*'
+                Resource: '*'
+
+  SlurmInstanceProfile:
+    DependsOn: SlurmRole
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref SlurmRole
+
+  PlacementGroup:
+    Type: AWS::EC2::PlacementGroup
+    Properties:
+      Strategy: cluster
+
+  SlurmManagementEC2:
+    DependsOn: PublicSubnet1
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !GetAtt PublicSubnet1.AvailabilityZone
+      IamInstanceProfile: !Ref SlurmInstanceProfile
+      ImageId: !FindInMap [ "RegionMap", Ref: "AWS::Region", "AMI" ]
+      InstanceType: !Ref SlurmMInstanceType
+      KeyName: !Ref KeyName
+      PlacementGroupName: !Ref PlacementGroup
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds: [ !Ref InstanceSG, !Ref SlurmClusterSG ]
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            DeleteOnTermination: true
+            VolumeType: gp2
+      Tags:
+        - Key: Name
+          Value: slurm-headnode
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          sudo sed -i "s|enforcing|disabled|g" /etc/selinux/config
+          sudo setenforce 0
+          sudo yum update -y
+          sudo yum --nogpgcheck install wget curl epel-release nano nfs-utils -y
+          sudo yum --nogpgcheck install python2-pip -y
+          sudo pip install awscli
+          sudo pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+          sudo chmod +x /bin/cfn-*
+          sudo mkdir -p /nfs
+          aws s3 cp ${S3Bucket}/slurm-mgmtd.sh /home/centos/slurm-mgmtd.sh
+          aws s3 cp ${S3Bucket}/slurm-${SlurmVersion}.tar.bz2 /home/centos/slurm-${SlurmVersion}.tar.bz2
+          aws s3 cp ${S3Bucket}/slurm.conf /home/centos/slurm.conf
+          aws s3 cp ${S3Bucket}/slurm-aws-startup.sh /home/centos/slurm-aws-startup.sh
+          sudo sed -i "s|@CINSTANCE@|${SlurmCInstanceType}|g" /home/centos/slurm-aws-startup.sh
+          sudo sed -i "s|@SUBNETID@|${PrivateSubnet1}|g" /home/centos/slurm-aws-startup.sh
+          sudo sed -i "s|@KEYNAME@|${KeyName}|g" /home/centos/slurm-aws-startup.sh
+          sudo sed -i "s|@S3BUCKET@|${S3Bucket}|g" /home/centos/slurm-aws-startup.sh
+          aws s3 cp ${S3Bucket}/slurm-aws-shutdown.sh /home/centos/slurm-aws-shutdown.sh
+          chmod +x /home/centos/slurm-mgmtd.sh
+          sudo /home/centos/slurm-mgmtd.sh ${SlurmVersion} ${SLURMComputeIPRange}
+          cfn-signal -e $? --stack ${AWS::StackName} --resource SlurmManagementEC2WaitCondition --region ${AWS::Region}
+
+Outputs:
+  VPC:
+    Description: VPC
+    Value: !Ref VPC
+  PublicSubnet1:
+    Description: Public Subnet
+    Value: !Ref PublicSubnet1
+  PrivateSubnet1:
+    Description: Private Subnet
+    Value: !Ref PrivateSubnet1
+    Condition: ShouldCreateResource
+  InstanceSG:
+    Description: SecurityGroup
+    Value: !Ref InstanceSG
+
+  AZ1:
+    Description: Availability Zone 1 - Public Subnet
+    Value: !GetAtt
+      - PublicSubnet1
+      - AvailabilityZone
+  AZ2:
+    Description: Availability Zone 2 - Private Subnet
+    Value: !GetAtt
+      - PrivateSubnet1
+      - AvailabilityZone
+    Condition: ShouldCreateResource
+
+  SlurmManagementNode:
+    Description: Slurm Management Endpoint
+    Value: !GetAtt SlurmManagementEC2.PublicIp
