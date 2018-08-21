@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Deploy a Basic Autoscaled SLURM Cluster
+Description: Sample SLURM Bursting Cluster
 
 Parameters:
   S3Bucket:
@@ -51,37 +51,6 @@ Parameters:
       - d2.xlarge
       - d2.2xlarge
 
-  SlurmCInstanceType:
-    Description: Instance type to be used for Slurm Compute Node.
-    Type: String
-    Default: c4.large
-    AllowedValues:
-      - t2.xlarge
-      - t2.2xlarge
-      - m3.xlarge
-      - m3.2xlarge
-      - m4.2xlarge
-      - m4.4xlarge
-      - m4.10xlarge
-      - m4.16xlarge
-      - c4.large
-      - c4.xlarge
-      - c4.2xlarge
-      - c4.4xlarge
-      - c4.8xlarge
-      - x1.16xlarge
-      - x1.32xlarge
-      - r4.large
-      - r4.2xlarge
-      - r4.4xlarge
-      - r4.8xlarge
-      - r4.16xlarge
-      - i3.large
-      - i3.xlarge
-      - i3.2xlarge
-      - i3.8xlarge
-      - d2.xlarge
-      - d2.2xlarge
 
   MaxSLURMClusterSize:
     Description: Max number of instances that can be provisioned for the cluster
@@ -92,17 +61,6 @@ Parameters:
     Description: SLURM IP Range for compute instances format ip-[]-[]-[]-[] for example ip-172-0-1-[100-255]
     Default: ip-10-0-1-[6-250]
     Type: String
-
-  CreateProdResources:
-    Description:
-      Create in Development (1 AZ,1 Subnet), POC Enviroment (1 AZ,2 Subnets), Production (2 AZ,4 Subnets)
-    Default: hpc-poc
-    Type: String
-    AllowedValues: [hpc-test, hpc-prod, hpc-poc]
-
-Conditions:
-  ShouldCreateResource: !Or [!Equals [hpc-prod, !Ref CreateProdResources],!Equals [hpc-poc, !Ref CreateProdResources] ]
-  hpctestCondition: !Equals [ hpc-test, !Ref CreateProdResources ]
 
 Mappings:
   RegionMap:
@@ -165,7 +123,7 @@ Resources:
         - !GetAZs ''
       Tags:
         - Key: Name
-          Value: Public Subnet 1
+          Value: SLURM Headnode Subnet 1
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -190,7 +148,6 @@ Resources:
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
-    Condition: ShouldCreateResource
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.1.0/24
@@ -199,11 +156,34 @@ Resources:
         - !GetAZs ''
       Tags:
         - Key: Name
-          Value: Private Subnet 1
+          Value: SLURM Compute Subnet 1
+
+    PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select
+        - '1'
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: SLURM Compute Subnet 2
+
+    PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select
+        - '2'
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: SLURM Compute Subnet 3
 
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
-    Condition: ShouldCreateResource
     Properties:
       VpcId: !Ref VPC
       Tags:
@@ -212,14 +192,12 @@ Resources:
 
   NATEIP:
     Type: AWS::EC2::EIP
-    Condition: ShouldCreateResource
     Properties:
       Domain: vpc
 
   PublicNAT:
     DependsOn: AttachGateway
     Type: AWS::EC2::NatGateway
-    Condition: ShouldCreateResource
     Properties:
       AllocationId: !GetAtt NATEIP.AllocationId
       SubnetId: !Ref PublicSubnet1
@@ -227,7 +205,6 @@ Resources:
   PrivateRoute:
     DependsOn: PublicNAT
     Type: AWS::EC2::Route
-    Condition: ShouldCreateResource
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
@@ -235,7 +212,18 @@ Resources:
 
   PrivateSubnetRouteTableAssociation1:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: ShouldCreateResource
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable
@@ -375,7 +363,6 @@ Outputs:
   PrivateSubnet1:
     Description: Private Subnet
     Value: !Ref PrivateSubnet1
-    Condition: ShouldCreateResource
   InstanceSG:
     Description: SecurityGroup
     Value: !Ref InstanceSG
@@ -390,7 +377,6 @@ Outputs:
     Value: !GetAtt
       - PrivateSubnet1
       - AvailabilityZone
-    Condition: ShouldCreateResource
 
   SlurmManagementNode:
     Description: Slurm Management Endpoint
