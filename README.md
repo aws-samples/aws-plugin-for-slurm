@@ -20,4 +20,13 @@ You can optionally add an EFS endpoint so that all ephemeral SLURM compute nodes
 
 1) Clone the github and sync the contents into a S3 bucket which will be used later to stand up the cluster.
 2) Download the SLURM source from SchedMD [here](https://www.schedmd.com/downloads.php) and copy into the S3 bucket created earlier.
-3) 
+3) Edit slurm_headnode_cloudformation.yml file with the version of the SLURM source used:
+
+```python
+  SlurmVersion:
+    Description: Select SLURM version to install
+    Type: String
+    Default: 17.11.8
+    AllowedValues:
+      - 17.11.8
+```
