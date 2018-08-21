@@ -344,7 +344,6 @@ Resources:
           aws s3 cp ${S3Bucket}/slurm-${SlurmVersion}.tar.bz2 /home/centos/slurm-${SlurmVersion}.tar.bz2
           aws s3 cp ${S3Bucket}/slurm.conf /home/centos/slurm.conf
           aws s3 cp ${S3Bucket}/slurm-aws-startup.sh /home/centos/slurm-aws-startup.sh
-          sudo sed -i "s|@CINSTANCE@|${SlurmCInstanceType}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@SUBNETID@|${PrivateSubnet1}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@KEYNAME@|${KeyName}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@S3BUCKET@|${S3Bucket}|g" /home/centos/slurm-aws-startup.sh
@@ -363,20 +362,6 @@ Outputs:
   PrivateSubnet1:
     Description: Private Subnet
     Value: !Ref PrivateSubnet1
-  InstanceSG:
-    Description: SecurityGroup
-    Value: !Ref InstanceSG
-
-  AZ1:
-    Description: Availability Zone 1 - Public Subnet
-    Value: !GetAtt
-      - PublicSubnet1
-      - AvailabilityZone
-  AZ2:
-    Description: Availability Zone 2 - Private Subnet
-    Value: !GetAtt
-      - PrivateSubnet1
-      - AvailabilityZone
 
   SlurmManagementNode:
     Description: Slurm Management Endpoint
