@@ -32,3 +32,7 @@ You can optionally add an EFS endpoint so that all ephemeral SLURM compute nodes
 ```
 
 3) Open the AWS Cloudformation Console and upload the slurm_headnode_cloudformation.yml under the Cloudformation -> Create Stack
+
+<p align="center">
+  <img src="/imgs/slurm-cf.png?raw=true" alt="SLURM CloudFormation Template"/>
+</p>
