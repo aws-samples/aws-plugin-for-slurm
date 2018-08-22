@@ -59,10 +59,10 @@ You will find explainations of the parameters on the [SLURM Elastic Computing - 
   <img src="/imgs/slurm-submit.gif?raw=true" alt="SLURM Bursting"/>
 </p>
 
-NOTE: The cluster will just allow the ephemeral nodes to be stood up in a single AZ. For additional AZs follow the example the in ```/nfs/slurm/etc/slrum.conf.d/slurm_nodes.conf```
+NOTE: The cluster will just allow the ephemeral nodes to be stood up in a single AZ. For additional AZs follow the example the in ```/nfs/slurm/etc/slurm.conf.d/slurm_nodes.conf```
 
 ```bash
 NodeName=ip-10-0-1-[6-250] CPUs=8 Feature=us-west-2a State=Cloud
 NodeName=ip-10-0-2-[6-250] CPUs=8 Feature=us-west-2b State=Cloud
 NodeName=ip-10-0-3-[6-250] CPUs=8 Feature=us-west-2c State=Cloud
-``
+```
