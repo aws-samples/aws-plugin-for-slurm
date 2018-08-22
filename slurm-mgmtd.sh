@@ -71,10 +71,6 @@ sudo -E cp $SLURM_HOME/etc/slurm/slurmctld.service /lib/systemd/system
 sudo -E cp /home/centos/slurm.conf $SLURM_HOME/etc/
 sudo -E mkdir -p $SLURM_HOME/etc/slurm.conf.d
 sudo -E sed -i "s|@HEADNODE@|$HOSTNAME|g" $SLURM_HOME/etc/slurm.conf
-export IPADDR=$(curl -sS http://169.254.169.254/latest/meta-data/local-ipv4)
-sudo -E sed -i "s|@IP@|$IPADDR|g" $SLURM_HOME/etc/slurm.conf
-export IPADDR_N=$(iptodns $IPADDR)
-sudo -E sed -i "s|@EXC@|$IPADDR_N|g" $SLURM_HOME/etc/slurm.conf
 
 echo 'SLURM_HOME=/nfs/slurm' | sudo tee /etc/profile.d/slurm.sh
 echo 'SLURM_CONF=$SLURM_HOME/etc/slurm/slurm.conf' | sudo tee -a /etc/profile.d/slurm.sh
@@ -88,6 +84,10 @@ sudo chmod +x $SLURM_HOME/bin/slurm-aws*
 echo NodeName=@RANGE@ Feature=@AZ@ State=Cloud | sudo tee -a $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
 sudo -E sed -i "s|@RANGE@|$2|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
 sudo -E sed -i "s|@AZ@|$3|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
+export IPADDR=$(curl -sS http://169.254.169.254/latest/meta-data/local-ipv4)
+sudo -E sed -i "s|@IP@|$IPADDR|g" $SLURM_HOME/etc/slurm.conf
+export IPADDR_N=$(iptodns $IPADDR)
+sudo -E sed -i "s|@EXC@|$IPADDR_N|g" $SLURM_HOME/etc/slurm.conf
 
 sudo systemctl enable slurmctld
 sudo systemctl start slurmctld
