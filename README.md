@@ -37,3 +37,4 @@ You can optionally add an EFS endpoint so that all ephemeral SLURM compute nodes
   <img src="/imgs/slurm-cf.png?raw=true" alt="SLURM CloudFormation Template"/>
 </p>
 
+The cloudformation will create the 1 Public and 3 Private Subnets and a single EC2 Instance as the SLURM Headnode. The SLURM source package you uploaded earlier will be retrieved, extracted and the SLURM stack will be installed. A NFS server will be setup which will be used a common namespace for the slurm configuration.
