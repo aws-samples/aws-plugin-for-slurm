@@ -5,7 +5,7 @@
 
 export SLURM_ROOT=/nfs/slurm
 export SLURM_CONF=/nfs/slurm/etc/slurm.conf
-export AWS_DEFAULT_REGION=us-west-2
+export AWS_DEFAULT_REGION=$(curl -sS http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk '{print $3}' | sed 's/"//g' | sed 's/,//g')
 export SLURM_POWER_LOG=/var/log/power_save.log
 
 function aws_shutdown()
