@@ -57,7 +57,7 @@ sudo chown centos:centos /home/centos/slurm-*.tar.bz2
 tar -xvf /home/centos/slurm-*.tar.bz2 -C /home/centos
 cd /home/centos/slurm-*
 /home/centos/slurm-*/configure --prefix=/nfs/slurm
-make -j $(nproc)
+make -j 4
 sudo make install
 
 sleep 5
