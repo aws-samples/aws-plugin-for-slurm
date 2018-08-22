@@ -37,4 +37,18 @@ You can optionally add an EFS endpoint so that all ephemeral SLURM compute nodes
   <img src="/imgs/slurm-cf.png?raw=true" alt="SLURM CloudFormation Template"/>
 </p>
 
-The cloudformation will create the 1 Public and 3 Private Subnets and a single EC2 Instance as the SLURM Headnode. The SLURM source package you uploaded earlier will be retrieved, extracted and the SLURM stack will be installed. A NFS server will be setup which will be used a common namespace for the slurm configuration.
+The cloudformation will create the 1 Public and 3 Private Subnets and a single EC2 Instance as the SLURM Headnode. The SLURM source package you uploaded earlier will be retrieved, extracted, and the SLURM stack will be installed. A NFS server will be setup which will be used a common namespace for the slurm configuration.
+
+5) The elastic compute portion of the slurm.conf can be found at ```/nfs/slurm/etc/slurm.conf``` 
+
+```bash
+SuspendTime=60
+ResumeTimeout=250
+TreeWidth=60000
+SuspendExcNodes=ip-10-0-0-251
+SuspendProgram=/nfs/slurm/bin/slurm-aws-shutdown.sh
+ResumeProgram=/nfs/slurm/bin/slurm-aws-startup.sh
+ResumeRate=0
+SuspendRate=0
+```
+You will find explainations of the parameters on the [SLURM Elastic Computing - SchedMD](https://slurm.schedmd.com/elastic_computing.html).
