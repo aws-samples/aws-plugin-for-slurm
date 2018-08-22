@@ -350,6 +350,7 @@ Resources:
           sudo sed -i "s|@PRIVATE1@|${PrivateSubnet1}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@PRIVATE2@|${PrivateSubnet2}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@PRIVATE3@|${PrivateSubnet3}|g" /home/centos/slurm-aws-startup.sh
+          sudo sed -i "s|@AZ@|${PrivateSubnet1.AvailabilityZone}|" /home/centos/slurm-aws-startup.sh
           aws s3 cp ${S3Bucket}/slurm-aws-shutdown.sh /home/centos/slurm-aws-shutdown.sh
           chmod +x /home/centos/slurm-mgmtd.sh
           sudo /home/centos/slurm-mgmtd.sh ${SlurmVersion} ${SLURMComputeIPRange}
