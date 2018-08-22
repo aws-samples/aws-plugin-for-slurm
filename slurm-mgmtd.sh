@@ -86,6 +86,7 @@ sudo chmod +x $SLURM_HOME/bin/slurm-aws*
 #echo `/nfs/slurm/sbin/slurmd -C` | cut -d " " -f1,2,5,6,7 | sudo tee -a $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
 echo NodeName=@RANGE@ Feature=@AZ@ State=Cloud | sudo tee -a $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
 sudo -E sed -i "s|@RANGE@|$2|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
+sudo -E sed -i "s|@AZ@|$3|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
 
 sudo systemctl enable slurmctld
 sudo systemctl start slurmctld
