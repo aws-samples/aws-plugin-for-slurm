@@ -256,7 +256,7 @@ Resources:
   SlurmRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: SlurmHeadnodeRole
+      RoleName: SlurmHeadnodeRole_${AWS::StackName}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
