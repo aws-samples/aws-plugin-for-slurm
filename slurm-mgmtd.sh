@@ -47,7 +47,7 @@ sudo chown -R munge /etc/munge/ /var/log/munge/
 sudo chmod 0700 /etc/munge/ /var/log/munge/
 sudo systemctl enable munge
 sudo systemctl start munge
-
+sleep 5
 
 #Setup SLURM
 sudo yum install openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad rpm-build -y
@@ -60,6 +60,7 @@ cd /home/centos/slurm-*
 make -j $(nproc)
 sudo make install
 
+sleep 5
 export SLURM_HOME=/nfs/slurm
 
 sudo -E mkdir -p $SLURM_HOME/etc/slurm
