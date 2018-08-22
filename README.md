@@ -52,3 +52,9 @@ ResumeRate=0
 SuspendRate=0
 ```
 You will find explainations of the parameters on the [SLURM Elastic Computing - SchedMD](https://slurm.schedmd.com/elastic_computing.html).
+
+6) Example of the running the slurm ephermal cluster, in the initial state the ```sinfo``` shows that no nodes are currently available. Once the ```test.sbatch``` file is submitted 2 nodes will be stood up (executed by the ResumeProgram) added to the cluster and will be ready for work.
+
+<p align="center">
+  <img src="/imgs/slurm-submit.gif?raw=true" alt="SLURM Bursting" width="500" height="500"/>
+</p>
