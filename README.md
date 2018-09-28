@@ -66,3 +66,4 @@ NodeName=ip-10-0-1-[6-250] CPUs=8 Feature=us-west-2a State=Cloud
 NodeName=ip-10-0-2-[6-250] CPUs=8 Feature=us-west-2b State=Cloud
 NodeName=ip-10-0-3-[6-250] CPUs=8 Feature=us-west-2c State=Cloud
 ```
+NOTE: With minor modification you can modify the ```slurm-aws-startup.sh``` and ```slurm-aws-shutdown.sh``` by adding local AWS_CREDENTIALS to burst from an on-prem SLURM headnode that is managining an on-prem compute cluster. You need to ensure that you can resolve AWS private address either through an AWS DirectConnect and/or VPN layer.
