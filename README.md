@@ -68,4 +68,4 @@ NodeName=ip-10-0-3-[6-250] CPUs=8 Feature=us-west-2c State=Cloud
 ```
 NOTE: With minor modification you can modify the ```slurm-aws-startup.sh``` and ```slurm-aws-shutdown.sh``` by adding local AWS_CREDENTIALS to burst from an on-prem SLURM headnode that is managining an on-prem compute cluster. You need to ensure that you can resolve AWS private address either through an AWS DirectConnect and/or VPN layer.
 
-NOTE: This demo uses c4.2xlarge instance types for the compute nodes, which have statically set the number of CPUs=8 in ```slurm_nodes.conf```. If you want to expierment with different instance types (in ``slurm-aws-startup.sh```) ensure you change the CPUs in ```slurm_nodes.conf```.
+NOTE: This demo uses c4.2xlarge instance types for the compute nodes, which have statically set the number of CPUs=8 in ```slurm_nodes.conf```. If you want to expierment with different instance types (in ```slurm-aws-startup.sh```) ensure you change the CPUs in ```slurm_nodes.conf```.
