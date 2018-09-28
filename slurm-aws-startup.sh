@@ -42,7 +42,7 @@ END
 
     aws ec2 run-instances --image-id $AWS_AMI --instance-type $3 --key-name $AWS_KEYNAME \
                       --security-group-ids $AWS_SECURITY --subnet-id $AWS_SUBNET_ID \
-                      --iam-instance-profile Name=s3fullaccess-generic \
+                      --iam-instance-profile Name=@SLURMROLE@ \
                       --user-data file://${TMPFILE} --region $AWS_DEFAULT_REGION --private-ip-address $2 \
 		                  --block-device-mappings '[ {"DeviceName":"/dev/sda1","Ebs": {"DeleteOnTermination": true}} ]' \
                       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$1_slurm-compute-processor}]" \

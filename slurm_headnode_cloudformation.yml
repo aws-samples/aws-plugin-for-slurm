@@ -64,23 +64,25 @@ Parameters:
 Mappings:
   RegionMap:
      us-east-1:
-        AMI:                                      ami-db48ada1
+        AMI:                                      ami-9887c6e7
      us-west-1:
-        AMI:                                      ami-8a6751ea
+        AMI:                                      ami-4826c22b
      us-west-2:
-        AMI:                                      ami-e535c59d
+        AMI:                                      ami-3ecc8f46
      sa-east-1:
-        AMI:                                      ami-c1dbadad
+        AMI:                                      ami-cb5803a7
      ap-southeast-2:
-        AMI:                                      ami-d8b3aabb
+        AMI:                                      ami-d8c21dba
      ap-southeast-1:
-        AMI:                                      ami-5ed8433d
+        AMI:                                      ami-8e0205f2
      ap-northeast-1:
-        AMI:                                      ami-84e316e2
+        AMI:                                      ami-8e8847f1
      eu-west-1:
-        AMI:                                      ami-5f76b626
+        AMI:                                      ami-3548444c
      eu-central-1:
-        AMI:                                      ami-2540f74a
+        AMI:                                      ami-dd3c0f36
+     eu-west-2:
+        AMI:                                      ami-00846a67
 
 Resources:
   SlurmManagementEC2WaitCondition:
@@ -253,7 +255,7 @@ Resources:
         ToPort: 65535
         SourceSecurityGroupId: !Ref SlurmClusterSG
 
-  SlurmRole:
+  SlurmHeadnodeRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub SlurmHeadnodeRole_${AWS::StackName}
@@ -292,14 +294,54 @@ Resources:
                 Action:
                   - 'iam:*'
                 Resource: '*'
+      - PolicyName: SlurmCloudWatch
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'cloudwatch:*'
+              Resource: '*'
 
-  SlurmInstanceProfile:
-    DependsOn: SlurmRole
+  SlurmComputeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub SlurmComputeRole_${AWS::StackName}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                - 'ec2.amazonaws.com'
+              Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+      - PolicyName: SlurmS3
+        PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                Resource: '*'
+
+  SlurmCInstanceProfile:
+    DependsOn: SlurmComputeRole
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
       Path: /
       Roles:
-        - !Ref SlurmRole
+        - !Ref SlurmComputeRole
+
+  SlurmHInstanceProfile:
+    DependsOn: SlurmHeadnodeRole
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref SlurmHeadnodeRole
 
   PlacementGroup:
     Type: AWS::EC2::PlacementGroup
@@ -311,7 +353,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone: !GetAtt PublicSubnet1.AvailabilityZone
-      IamInstanceProfile: !Ref SlurmInstanceProfile
+      IamInstanceProfile: !Ref SlurmHInstanceProfile
       ImageId: !FindInMap [ "RegionMap", Ref: "AWS::Region", "AMI" ]
       InstanceType: !Ref SlurmMInstanceType
       KeyName: !Ref KeyName
@@ -347,6 +389,7 @@ Resources:
           sudo sed -i "s|@KEYNAME@|${KeyName}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@S3BUCKET@|${S3Bucket}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@BASEAMI@|${BaseAMI}|g" /home/centos/slurm-aws-startup.sh
+          sudo sed -i "s|@SLURMROLE@|${SlurmCInstanceProfile}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@PRIVATE1@|${PrivateSubnet1}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@PRIVATE2@|${PrivateSubnet2}|g" /home/centos/slurm-aws-startup.sh
           sudo sed -i "s|@PRIVATE3@|${PrivateSubnet3}|g" /home/centos/slurm-aws-startup.sh
