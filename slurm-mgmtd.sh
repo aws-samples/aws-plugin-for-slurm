@@ -81,9 +81,20 @@ sudo -E mkdir -p /var/spool/slurm
 sudo cp /home/centos/slurm-aws* $SLURM_HOME/bin
 sudo chmod +x $SLURM_HOME/bin/slurm-aws*
 #echo `/nfs/slurm/sbin/slurmd -C` | cut -d " " -f1,2,5,6,7 | sudo tee -a $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
-echo NodeName=@RANGE@ CPUs=8 Feature=@AZ@ State=Cloud | sudo tee -a $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
-sudo -E sed -i "s|@RANGE@|$2|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
-sudo -E sed -i "s|@AZ@|$3|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
+
+azs=$2
+ranges=$3
+
+IFS=',' read -r -a azs_arr <<< "$azs"
+IFS=',' read -r -a ranges_arr <<< "$ranges"
+num_ranges=`printf '%s\n' "${ranges_arr[@]}" | wc -w`
+
+for ((i =0; i < $num_ranges; i++)); do
+   echo NodeName=@RANGE@ CPUs=8 Feature=@AZ@ State=Cloud | sudo tee -a $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
+   sudo -E sed -i "s|@RANGE@|${ranges_arr[i]}|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
+   sudo -E sed -i "s|@AZ@|${azs_arr[i]}|g" $SLURM_HOME/etc/slurm.conf.d/slurm_nodes.conf
+done
+
 export IPADDR=$(curl -sS http://169.254.169.254/latest/meta-data/local-ipv4)
 sudo -E sed -i "s|@IP@|$IPADDR|g" $SLURM_HOME/etc/slurm.conf
 export IPADDR_N=$(iptodns $IPADDR)

@@ -57,8 +57,8 @@ Parameters:
       - d2.2xlarge
 
   SLURMComputeIPRange:
-    Description: SLURM IP Range for compute instances format ip-[]-[]-[]-[] for example ip-172-0-1-[100-255]
-    Default: ip-10-0-1-[6-250]
+    Description: SLURM IP Range for compute instances format ip-[]-[]-[]-[] for example ip-10-0-1-[100-255]. Comma delimited list of ranges are supported.
+    Default: ip-10-0-1-[6-250],ip-10-0-2-[6-250],ip-10-0-3-[6-250]
     Type: String
 
 Mappings:
@@ -395,7 +395,7 @@ Resources:
           sudo sed -i "s|@PRIVATE3@|${PrivateSubnet3}|g" /home/centos/slurm-aws-startup.sh
           aws s3 cp ${S3Bucket}/slurm-aws-shutdown.sh /home/centos/slurm-aws-shutdown.sh
           chmod +x /home/centos/slurm-mgmtd.sh
-          sudo /home/centos/slurm-mgmtd.sh ${SlurmVersion} ${SLURMComputeIPRange} ${PrivateSubnet1.AvailabilityZone}
+          sudo /home/centos/slurm-mgmtd.sh ${SlurmVersion} ${PrivateSubnet1.AvailabilityZone},${PrivateSubnet2.AvailabilityZone},${PrivateSubnet3.AvailabilityZone} ${SLURMComputeIPRange} 
           cfn-signal -e $? --stack ${AWS::StackName} --resource SlurmManagementEC2WaitCondition --region ${AWS::Region}
 
 Outputs:
