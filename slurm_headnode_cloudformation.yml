@@ -220,13 +220,13 @@ Resources:
   PrivateSubnetRouteTableAssociation2:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PrivateSubnet1
+      SubnetId: !Ref PrivateSubnet2
       RouteTableId: !Ref PrivateRouteTable
 
   PrivateSubnetRouteTableAssociation3:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PrivateSubnet1
+      SubnetId: !Ref PrivateSubnet3
       RouteTableId: !Ref PrivateRouteTable
 
   InstanceSG:
@@ -254,6 +254,29 @@ Resources:
         FromPort: 1
         ToPort: 65535
         SourceSecurityGroupId: !Ref SlurmClusterSG
+  
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:GetObject'
+            Resource:
+              - '*'
+      RouteTableIds:
+        - !Ref PublicRouteTable
+        - !Ref PrivateRouteTable
+      ServiceName: !Join 
+        - ''
+        - - com.amazonaws.
+          - !Ref 'AWS::Region'
+          - .s3
+      VpcId: !Ref VPC
+      VpcEndpointType: 'Gateway'
 
   SlurmHeadnodeRole:
     Type: AWS::IAM::Role
