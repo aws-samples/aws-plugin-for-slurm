@@ -30,7 +30,6 @@ function aws_startup()
     cat << END > $TMPFILE
 #!/bin/bash -xe
 sudo sed -i "s|enforcing|disabled|g" /etc/selinux/config
-sudo setenforce 0
 sudo yum --nogpgcheck install wget curl epel-release nfs-utils -y
 sudo yum install python2-pip -y
 sudo pip install awscli
