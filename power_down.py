@@ -21,40 +21,40 @@ except Exception as e:
     logger.critical('Failed to get nodes info - %s' %e)
     sys.exit(1)
 
-# Extract node details and evaluate state
+def change_state(node_name, new_state, reason=None):
+    try:
+        slurm_param = 'state=%s' %new_state
+        if reason is not None:
+            slurm_param += ' reason=%s' %reason
+        common.update_node(node_name, slurm_param)
+        logger.info('Set node %s to state %s' %(node_name, new_state))
+    except Exception as e:
+        logger.error('Failed to set node %s to state %s - %s' %(node_name, new_state, e))
+
+# Extract node details and change the state if required
 for line in lines:
     line_split = [i for i in line.split(' ') if '=' in i]
     node_attributes = {i.split('=')[0]: i.split('=')[1] for i in line_split}
     node_name = node_attributes['NodeName']
     node_states = node_attributes['State'].split('+')  # A node should have multiple states like IDLE+CLOUD+POWER
 
-    # Skip the node if it is in a transient state
-    if 'POWERING_DOWN' in node_states:
-        continue
-    
-    # Power down nodes that are stuck in DOWN* or IDLE* state
+    # Power down nodes that are stuck in DOWN* or IDLE* state (node is not responding)
     if 'DOWN*' in node_states or 'IDLE*' in node_states:
-        try:
-            slurm_param = 'state=POWER_DOWN reason=node_stuck'
-            common.update_node(node_name, slurm_param)
-            logger.info('Set node state %s to POWER_DOWN' %node_name)
-        except Exception as e:
-            logger.error('Failed to set node state %s to POWER_DOWN - %s' %(node_name, e))
+        change_state(node_name, 'POWER_DOWN', reason='node_not_responding')
 
-    # Set node state to IDLE if it is in DOWN state
-    if 'DOWN' in node_states:
-        try:
-            slurm_param = 'state=IDLE'
-            common.update_node(node_name, slurm_param)
-            logger.info('Set node state %s to IDLE' %node_name)
-        except Exception as e:
-            logger.error('Failed to set node state %s to IDLE - %s' %(node_name, e))
+    # In some situations, a node may be placed in COMPLETING+DRAIN state by Slurm 
+    # and remains stuck. In that case, force the node to become DOWN
+    if 'COMPLETING' in node_states and 'DRAIN' in node_states:
+        change_state(node_name, 'DOWN', reason='node_stuck')
 
-    # Set node state to UNDRAIN if it is in DRAIN and POWER states
+    # If the node is DOWN and in power saving mode, set the node to IDLE
+    if 'DOWN' in node_states and 'POWER' in node_states:
+        change_state(node_name, 'IDLE')
+
+    # If the node is DOWN but still up, power down the node
+    if 'DOWN' in node_states and not 'POWER' in node_states:
+        change_state(node_name, 'POWER_DOWN', reason='node_stuck')
+
+    # If the node is in power saving mode but still draining, set the node to UNDRAIN
     if 'DRAIN' in node_states and 'POWER' in node_states:
-        try:
-            slurm_param = 'state=UNDRAIN'
-            common.update_node(node_name, slurm_param)
-            logger.info('Set node state %s to UNDRAIN' %node_name)
-        except Exception as e:
-            logger.error('Failed to set node state %s to UNDRAIN - %s' %(node_name, e))
+        change_state(node_name, 'UNDRAIN')
