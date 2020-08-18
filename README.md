@@ -28,7 +28,7 @@ All nodes that Slurm may launch in AWS must be initially declared in the Slurm c
 
 This plugin consists of the programs that Slurm executes when nodes are restored in normal operation (`ResumeProgram`) or placed in power mode saving (`SuspendProgram`). It relies upon EC2 Fleet to launch instances.
 
-<a name="tc_pluginfiles"/>
+<a name="tc_files"/>
 
 ## Plugin files
 
