@@ -1,7 +1,3 @@
-TODO:
-- Add release that have been tested with
-- Make the creation of launch template more explicit
-
 # AWS Plugin for Slurm - Version 2
 
 > The [plugin](https://github.com/aws-samples/aws-plugin-for-slurm) initially released in 2018 has been entirely redeveloped. Major changes includes: support of EC2 Fleet capabilities such as Spot or instance type diversification, decoupling node names from instance host names or IP addresses, better error handling when a node fails to respond during its launch.
@@ -192,13 +188,13 @@ This script is used to generate the Slurm configuration that is specific to this
 
 ### Prerequisites
 
-* You must have a Slurm headnode that is already functional, no matter where it resides.
+* You must have a Slurm headnode that is already functional, no matter where it resides. The plugin was tested with Slurm 20.02.3, but it should be compatible with any Slurm version that supports power saving mode.
 
 * You will need to provide one or more subnets in which the EC2 compute nodes will be launched. If the headnode is not running on AWS, you must establish private connectivity between the headnode and these subnets, such as a VPN connection.
 
 * **Important**: The compute nodes must specify their cluster name when launching `slurmd`. The cluster name can be retrieved from the EC2 instance tag. If you use `systemctl` to launch Slurm, here is what you could do to automatically pass the node name when compute nodes start `slurmd`:
 
-1) Create a script that returns the node name from the EC2 tag, or the hostname if the tag value cannot be retrieved. You must have the AWS CLI installed to run this script, and you must attach an IAM role to the EC2 compute nodes that grants `ec2:DescribeInstances`. Adapt the full path of the script `/fullpath/get_nodename` to your own context:
+Create a script that returns the node name from the EC2 tag, or the hostname if the tag value cannot be retrieved. You must have the AWS CLI installed to run this script, and you must attach an IAM role to the EC2 compute nodes that grants `ec2:DescribeInstances`. Adapt the full path of the script `/fullpath/get_nodename` to your own context:
 
 ```
 cat > /fullpath/get_nodename <<'EOF'
@@ -217,7 +213,7 @@ EOF
 chmod +x /fullpath/get_nodename
 ```
 
-2) Add or change the following attributes in the service configuration file `/lib/systemd/system/slurmd.service`:
+Add or change the following attributes in the service configuration file `/lib/systemd/system/slurmd.service`:
 
 ```
 ExecStartPre=/bin/bash -c "/bin/systemctl set-environment SLURM_NODENAME=$(/fullpath/get_nodename)"
@@ -247,11 +243,11 @@ chmod +x *.py
 
 3) You need to grant the headnode AWS permissions to make EC2 requests.
 
-   * If the headnode resides on AWS, create an IAM role for EC2 (see [Creating an IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#create-iam-role)) with an inline policy that allows the actions below, and attach the role to the headnode (see [Attaching an IAM role to an instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#attach-iam-role)).
+If the headnode resides on AWS, create an IAM role for EC2 (see [Creating an IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#create-iam-role)) with an inline policy that allows the actions below, and attach the role to the headnode (see [Attaching an IAM role to an instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#attach-iam-role)).
 
-   * If the headnode is not on AWS, create an IAM user (see [Creating IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html#id_users_create_console)) with an inline policy that allows the actions below. Create an access key for that user (see [Managing access keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)). Then, configure AWS credentials on your headnode using the AWS CLI (see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)). You can either configure the default AWS CLI profile with `aws configure`, or create a custom profile with `aws configure --profile profile_name` that you will reference in `ProfileName`.
+If the headnode is not on AWS, create an IAM user (see [Creating IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html#id_users_create_console)) with an inline policy that allows the actions below. Create an access key for that user (see [Managing access keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)). Then, configure AWS credentials on your headnode using the AWS CLI (see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)). You can either configure the default AWS CLI profile with `aws configure`, or create a custom profile with `aws configure --profile profile_name` that you will reference in `ProfileName`.
 
-   * The minimum required permissions are:
+The minimum required permissions are:
 
 ```
 ec2:CreateFleet
@@ -266,9 +262,9 @@ iam:PassRole (you can restrict this actions to the ARN of the EC2 role for compu
 
 5) Create one or more EC2 launch templates that will be used to create EC2 compute nodes.
 
-   * A launch template specifies some of the required instance configuration parameters. For each launch template, you must specify at least the AMI ID, the security group(s) to attach, the EC2 role, and eventually a key pair and some scripts to execute at launch with `UserData`. You will multiple launch templates if your EC2 compute nodes need various values for these parameters.
+A launch template specifies some of the required instance configuration parameters. For each launch template, you must specify at least the AMI ID, the security group(s) to attach, the EC2 role, and eventually a key pair and some scripts to execute at launch with `UserData`. You will multiple launch templates if your EC2 compute nodes need various values for these parameters.
 
-   * For example launch template to create, follow the instructions at [Creating a new launch template using parameters you define](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html#create-launch-template-define-parameters). Note the launch template name or launch template ID for later use.
+For example launch template to create, follow the instructions at [Creating a new launch template using parameters you define](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html#create-launch-template-define-parameters). Note the launch template name or launch template ID for later use.
 
 6) Create the JSON configuration files `config.json` and `partitions.json` in the same folder than the PY files, and populate them as instructed in the **Plugin files** section.
 
