@@ -1,3 +1,7 @@
+TODO:
+- Add release that have been tested with
+- Make the creation of launch template more explicit
+
 # AWS Plugin for Slurm - Version 2
 
 > The [plugin](https://github.com/aws-samples/aws-plugin-for-slurm) initially released in 2018 has been entirely redeveloped. Major changes includes: support of EC2 Fleet capabilities such as Spot or instance type diversification, decoupling node names from instance host names or IP addresses, better error handling when a node fails to respond during its launch.
@@ -241,7 +245,13 @@ wget -q https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/power_
 chmod +x *.py
 ```
 
-3) If the headnode is located on-premises, you should configure AWS credentials. You can either configure the default AWS CLI profile, or create a custom profile that you will reference in `ProfileName`. See [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) for detailed instructions. If the headnode is running on AWS, you can attach an EC2 role instead. The minimum required IAM permissions are:
+3) You need to grant the headnode AWS permissions to make EC2 requests.
+
+   * If the headnode resides on AWS, create an IAM role for EC2 (see [Creating an IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#create-iam-role)) with an inline policy that allows the actions below, and attach the role to the headnode (see [Attaching an IAM role to an instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#attach-iam-role)).
+
+   * If the headnode is not on AWS, create an IAM user (see [Creating IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html#id_users_create_console)) with an inline policy that allows the actions below. Create an access key for that user (see [Managing access keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey)). Then, configure AWS credentials on your headnode using the AWS CLI (see [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)). You can either configure the default AWS CLI profile with `aws configure`, or create a custom profile with `aws configure --profile profile_name` that you will reference in `ProfileName`.
+
+   * The minimum required permissions are:
 
 ```
 ec2:CreateFleet
@@ -249,16 +259,22 @@ ec2:RunInstances
 ec2:TerminateInstances
 ec2:CreateTags
 ec2:DescribeInstances
-iam:PassRole (can be restricted to the ARN of the EC2 role for compute nodes)
+iam:PassRole (you can restrict this actions to the ARN of the EC2 role for compute nodes)
 ```
 
-4) Create an IAM role to allow EC2 compute nodes to describe EC2 tags (`ec2:DescribeTags`).
+4) Create an IAM role for EC2 compute nodes that allows the action `ec2:DescribeTags` (see [Creating an IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#create-iam-role)).
 
-5) Create the JSON configuration files `config.json` and `partitions.json` in the same folder than the PY files, and populate them as instructed in the **Plugin files** section. You will need to provide one or more [launch templates](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html) in `partitions.json` that will be used to launch EC2 compute nodes. You must create these launch templates in Amazon EC2. Each launch template must include at least the AMI ID, one or more security groups to assign, and the IAM role that you created in step 4.
+5) Create one or more EC2 launch templates that will be used to create EC2 compute nodes.
 
-5) Run `generate_conf.py` and append the content of the output file to `slurm.conf`. Refresh the Slurm configuration by running the command `scontrol reconfigure`.
+   * A launch template specifies some of the required instance configuration parameters. For each launch template, you must specify at least the AMI ID, the security group(s) to attach, the EC2 role, and eventually a key pair and some scripts to execute at launch with `UserData`. You will multiple launch templates if your EC2 compute nodes need various values for these parameters.
 
-6) Change the `cron` configuration to run the script `power_down.py` every minute.
+   * For example launch template to create, follow the instructions at [Creating a new launch template using parameters you define](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html#create-launch-template-define-parameters). Note the launch template name or launch template ID for later use.
+
+6) Create the JSON configuration files `config.json` and `partitions.json` in the same folder than the PY files, and populate them as instructed in the **Plugin files** section.
+
+7) Run `generate_conf.py` and append the content of the output file to `slurm.conf`. Refresh the Slurm configuration by running the command `scontrol reconfigure`.
+
+8) Change the `cron` configuration to run the script `power_down.py` every minute.
 
 ```
 sudo crontab -e
