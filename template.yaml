@@ -9,7 +9,7 @@ Parameters:
 
   PluginPrefixUrl:
     Type: String
-    Default: https://github.com/malaval/aws-plugin-for-slurm/raw/plugin-v2/
+    Default: https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/
     Description: Path to the plugin files
 
   VpcId:

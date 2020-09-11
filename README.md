@@ -268,7 +268,19 @@ For example launch template to create, follow the instructions at [Creating a ne
 
 6) Create the JSON configuration files `config.json` and `partitions.json` in the same folder than the PY files, and populate them as instructed in the **Plugin files** section.
 
-7) Run `generate_conf.py` and append the content of the output file to `slurm.conf`. Refresh the Slurm configuration by running the command `scontrol reconfigure`.
+7) Run `generate_conf.py` and append the content of the output file `slurm.conf.aws` to your Slurm configuration file `slurm.conf`. Refresh the Slurm configuration by running the command `scontrol reconfigure`, or by restarting Slurmctld.
+
+Here is an example of output file:
+
+```
+PrivateData=CLOUD
+ResumeProgram=/slurm/etc/aws/resume.py
+SuspendRate=100
+# ...More Slurm parameters
+
+NodeName=aws-node[0-99] State=CLOUD CPUs=4
+Partition=aws Nodes=aws-node[0-99] Default=No MaxTime=INFINITE State=UP
+```
 
 8) Change the `cron` configuration to run the script `power_down.py` every minute.
 
