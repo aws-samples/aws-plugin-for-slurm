@@ -1,5 +1,7 @@
 ## AWS Plugin for Slurm
 
+> **Note from September 11, 2020**: We've redeveloped the Slurm plugin for AWS. The new version is available in the [plugin-v2](https://github.com/aws-samples/aws-plugin-for-slurm/tree/plugin-v2) branch. Major changes includes: support of EC2 Fleet capabilities such as Spot or instance type diversification, decoupling node names from instance host names or IP addresses, better error handling when a node fails to respond during its launch.
+
 A sample integration of AWS services with Slurm
 
 ## License Summary
