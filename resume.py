@@ -30,13 +30,14 @@ for partition_name, nodegroups in nodes_to_resume.items():
         
         nb_nodes_to_resume = len(node_ids)
         nodegroup = common.get_partition_nodegroup(partition_name, nodegroup_name)
-        client = common.get_ec2_client(nodegroup)
         
         # Ignore if the partition and the node group are not in partitions.json
         if nodegroup is None:
             logger.debug('Skipping partition=%s nodegroup=%s: not in partition.json' %(partition_name, nodegroup_name))
             continue
         
+        client = common.get_ec2_client(nodegroup)
+
         # Create a dict for the EC2 CreateFleet request
         request_fleet = {
             'LaunchTemplateConfigs': [
