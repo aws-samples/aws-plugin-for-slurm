@@ -134,7 +134,7 @@ This JSON file specifies the groups of nodes and associated partitions that Slur
 * `Partitions`: List of partitions
    * `PartitionName`: Name of the partition. Must match the pattern `^[a-zA-Z0-9_]+$`.
    * `NodeGroups`: List of node groups for this partition. A node group is a set of nodes that share the same specifications.
-      * `NodeGroupName`: Name of the node group. Must match the pattern `^[a-zA-Z0-9_]+$`.
+      * `NodeGroupName`: Name of the node group. Must match the pattern `^[a-zA-Z0-9_]+[a-zA-Z_]$`.
       * `MaxNodes`: Maximum number of nodes that Slurm can launch for this node group. For each node group, `generate_conf.py` will issue a line with `NodeName=[partition_name]-[nodegroup_name][0-(max_nodes-1)]`
       * `Region`: Name of the AWS region where to launch EC2 instances for this node group. Example: `us-east-1`.
       * [OPTIONAL] `ProfileName`: Name of the AWS CLI profile to use to authenticate AWS requests. If you don't specify a profile name, it uses the default profile name of EC2 metadata credentials.
