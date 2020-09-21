@@ -82,14 +82,14 @@ def validate_partitions(data):
     
     for i_partition, partition in enumerate(data['Partitions']):
         assert 'PartitionName' in partition, 'Missing "PartitionName" in root["Partitions"][%s]' %i_partition
-        assert re.match('^[a-zA-Z0-9_]+$', partition['PartitionName']), 'root["Partitions"][%s]["PartitionName"] does not match ^[a-zA-Z0-9-]+$' %i_partition
+        assert re.match('^[a-zA-Z0-9_]+$', partition['PartitionName']), 'root["Partitions"][%s]["PartitionName"] does not match ^[a-zA-Z0-9_]+$' %i_partition
         
         assert 'NodeGroups' in partition, 'Missing "NodeGroups" in root["Partitions"][%s]' %i_partition
         assert isinstance(partition['NodeGroups'], list), 'root["Partitions"][%s]["NodeGroups"] is not an array' %i_partition
         
         for i_nodegroup, nodegroup in enumerate(partition['NodeGroups']):
             assert 'NodeGroupName' in nodegroup, 'Missing "NodeGroupName" in root["Partitions"][%s]["NodeGroups"][%s]' %(i_partition, i_nodegroup)
-            assert re.match('^[a-zA-Z0-9_]+$', nodegroup['NodeGroupName']), 'root["Partitions"][%s]["NodeGroups"][%s]["NodeGroupName"] does not match ^[a-zA-Z0-9-]+$' %(i_partition, i_nodegroup)
+            assert re.match('^[a-zA-Z0-9_]+[a-zA-Z_]$', nodegroup['NodeGroupName']), 'root["Partitions"][%s]["NodeGroups"][%s]["NodeGroupName"] does not match ^[a-zA-Z0-9_]+[a-zA-Z_]$' %(i_partition, i_nodegroup)
             
             assert 'MaxNodes' in nodegroup, 'Missing "MaxNodes" in root["Partitions"][%s]["NodeGroups"][%s]' %(i_partition, i_nodegroup)
             assert isinstance(nodegroup['MaxNodes'], int), 'root["Partitions"][%s]["NodeGroups"][%s]["MaxNodes"] is not a number' %(i_partition, i_nodegroup)
@@ -238,7 +238,7 @@ def parse_node_names(node_names):
     for node_name in node_names:
         
         # For each node: extract partition name, node group name and node id
-        pattern = '^([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+)([0-9]+)$'
+        pattern = '^([a-zA-Z0-9_]+)-([a-zA-Z0-9_]+[a-zA-Z_])([0-9]+)$'
         match = re.match(pattern, node_name)
         if match:
             partition_name, nodegroup_name, node_id = match.groups()
