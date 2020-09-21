@@ -33,7 +33,7 @@ for partition_name, nodegroups in nodes_to_resume.items():
         
         # Ignore if the partition and the node group are not in partitions.json
         if nodegroup is None:
-            logger.debug('Skipping partition=%s nodegroup=%s: not in partition.json' %(partition_name, nodegroup_name))
+            logger.warning('Skipping partition=%s nodegroup=%s: not in partition.json' %(partition_name, nodegroup_name))
             continue
         
         client = common.get_ec2_client(nodegroup)
