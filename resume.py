@@ -3,6 +3,7 @@ import copy
 import json
 import re
 import sys
+import time
 
 import common
 
@@ -86,10 +87,23 @@ for partition_name, nodegroups in nodes_to_resume.items():
         for instance in response_fleet['Instances']:
             
             # Retrieve additional instance details
-            try:
-                response_describe = client.describe_instances(InstanceIds=instance['InstanceIds'])
-            except Exception as e:
-                logger.error('Failed to describe instances %s: %s' %(', '.join(instance['InstanceIds']), e))
+            nb_retry = 1
+            max_retries = 3
+            e_msg = None
+            while True:
+                try:
+                    response_describe = client.describe_instances(InstanceIds=instance['InstanceIds'])
+                    break
+                except Exception as e:
+                    # Retry if an error is returned because of eventual consistency
+                    if nb_retry <= max_retries:
+                        nb_retry += 1
+                        time.sleep(nb_retry)
+                    else:
+                        e_msg = str(e)
+                        break
+            if e_msg:
+                logger.error('Failed to describe instances %s: %s' %(', '.join(instance['InstanceIds']), e_msg))
                 continue
             
             # For each instance that was successfully launched
