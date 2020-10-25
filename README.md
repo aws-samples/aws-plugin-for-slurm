@@ -174,7 +174,7 @@ This script is the `SuspendProgram` executed by Slurm to place nodes in power sa
 
 You can manually try the suspend program by running `/fullpath/suspend.py (partition_name)-(nodegroup_name)(id)` such as  `/fullpath/suspend.py partition-nodegroup0`.
 
-### `power_down.py`
+### `change_state.py`
 
 This script is executed every minute by `cron` to change the state of nodes that are stuck in a transient or undesired state. For example, compute nodes that failed to respond within `ResumeTimeout` seconds are placed in a `DOWN*` state and the state must be set to `POWER_DOWN`.
 
@@ -237,7 +237,7 @@ wget -q https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/common
 wget -q https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/resume.py
 wget -q https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/suspend.py
 wget -q https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/generate_conf.py
-wget -q https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/power_down.py 
+wget -q https://github.com/aws-samples/aws-plugin-for-slurm/raw/plugin-v2/change_state.py 
 chmod +x *.py
 ```
 
@@ -282,16 +282,16 @@ NodeName=aws-node[0-99] State=CLOUD CPUs=4
 Partition=aws Nodes=aws-node[0-99] Default=No MaxTime=INFINITE State=UP
 ```
 
-8) Change the `cron` configuration to run the script `power_down.py` every minute.
+8) Change the `cron` configuration to run the script `change_state.py` every minute.
 
 ```
 sudo crontab -e
 ```
 
-If the Slurm user is not root, you could create the cron for that user instead `sudo crontab -e -u username`. Add the following line into the file. Make sure to adapt the path `/fullpath/power_down.py` to your own context.
+If the Slurm user is not root, you could create the cron for that user instead `sudo crontab -e -u username`. Add the following line into the file. Make sure to adapt the path `/fullpath/change_state.py` to your own context.
 
 ```
-* * * * * /fullpath/power_down.py
+* * * * * /fullpath/change_state.py
 ```
 
 <a name="tc_cloudformation"/>

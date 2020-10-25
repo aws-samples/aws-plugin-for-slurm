@@ -5,7 +5,7 @@ import sys
 import common
 
 
-logger, config, partitions = common.get_common('power_down')
+logger, config, partitions = common.get_common('change_state')
 
 # Populate a hostlist with all AWS nodes
 hostlist = []

@@ -275,7 +275,7 @@ Resources:
               wget -q ${PluginPrefixUrl}resume.py
               wget -q ${PluginPrefixUrl}suspend.py
               wget -q ${PluginPrefixUrl}generate_conf.py
-              wget -q ${PluginPrefixUrl}power_down.py 
+              wget -q ${PluginPrefixUrl}change_state.py 
               chmod +x *.py
 
               cat > $SLURM_HOME/etc/aws/config.json <<EOF
@@ -376,7 +376,7 @@ Resources:
 
               crontab -l > mycron
               cat > mycron <<EOF
-              * * * * * $SLURM_HOME/etc/aws/power_down.py
+              * * * * * $SLURM_HOME/etc/aws/change_state.py
               EOF
               crontab mycron
               rm mycron
