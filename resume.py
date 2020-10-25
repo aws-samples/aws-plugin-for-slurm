@@ -10,6 +10,23 @@ import common
 
 logger, config, partitions = common.get_common('resume')
 
+
+# Retry in case the request failed because of eventual consistency
+def retry(func, *args, **kwargs):
+    nb_retry = 1
+    MAX_RETRIES = 3
+    while True:
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            if nb_retry <= MAX_RETRIES:
+                logger.debug('Failed %s %d time(s): %s', func.__name__, nb_retry, e)
+                nb_retry += 1
+                time.sleep(nb_retry)
+            else:
+                raise e
+
+
 # Retrieve the list of hosts to resume
 try:
     hostlist = sys.argv[1]
@@ -87,23 +104,10 @@ for partition_name, nodegroups in nodes_to_resume.items():
         for instance in response_fleet['Instances']:
             
             # Retrieve additional instance details
-            nb_retry = 1
-            max_retries = 3
-            e_msg = None
-            while True:
-                try:
-                    response_describe = client.describe_instances(InstanceIds=instance['InstanceIds'])
-                    break
-                except Exception as e:
-                    # Retry if an error is returned because of eventual consistency
-                    if nb_retry <= max_retries:
-                        nb_retry += 1
-                        time.sleep(nb_retry)
-                    else:
-                        e_msg = str(e)
-                        break
-            if e_msg:
-                logger.error('Failed to describe instances %s: %s' %(', '.join(instance['InstanceIds']), e_msg))
+            try:
+                response_describe = retry(client.describe_instances, InstanceIds=instance['InstanceIds'])
+            except Exception as e:
+                logger.error('Failed to describe instances %s: %s' %(', '.join(instance['InstanceIds']), e))
                 continue
             
             # For each instance that was successfully launched
@@ -135,7 +139,7 @@ for partition_name, nodegroups in nodes_to_resume.items():
                         'Resources': [instance_id],
                         'Tags': tags
                     }
-                    client.create_tags(**request_tags)
+                    retry(client.create_tags, **request_tags)
                     logger.debug('Tagged node %s: %s' %(node_name, json.dumps(request_tags, indent=4)))
                 except Exception as e:
                     logger.error('Failed to tag node %s - %s' %(node_name, e))
