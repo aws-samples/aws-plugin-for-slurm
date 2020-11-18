@@ -133,7 +133,8 @@ for partition_name, nodegroups in nodes_to_resume.items():
                     }
                 ]
                 if 'Tags' in nodegroup:
-                    tags += nodegroup['Tags']
+                    # Replace any instance of %n with node name in tags
+                    tags += [ {k: t[k].replace('%n', node_name).replace('%i', ip_address) for k in t} for t in nodegroup['Tags'] ]
                 try:
                     request_tags = {
                         'Resources': [instance_id],
