@@ -146,6 +146,8 @@ This JSON file specifies the groups of nodes and associated partitions that Slur
       * `LaunchTemplateOverrides`: Must be filled in the same way then the object of the same name in the [EC2 CreateFleet API](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Client.create_fleet). Do not populate the field `SubnetId` in template overrides.
       * `SubnetIds`: List of subnets where EC2 instances can be launched for this node group. If you provide multiple subnets, they must be in different availability zones.
       * `Tags`: List of tags applied to the EC2 instances launched for this node group.
+        * A tag `Name` is automatically added at launch, whose value is the name of the node `[partition_name]-[nodegroup_name][id]`. You should not delete or override this tag, because the script `suspend.py` uses it to find which instance is associated with the node to suspend.
+        * You use the sequence `{ip_address}` in the value of tag, it will be replaced with the IP address. Similarly, `{node_name}` will be replaced with the name of the node, `{hostname}` with the EC2 hostname.
 
 Refer to the section **Examples of `partitions.json`** for examples of file content.
 

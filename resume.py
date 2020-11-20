@@ -129,11 +129,23 @@ for partition_name, nodegroups in nodes_to_resume.items():
                 tags = [
                     {
                         'Key': 'Name',
-                        'Value': node_name
+                        'Value': '{node_name}'
                     }
                 ]
                 if 'Tags' in nodegroup:
                     tags += nodegroup['Tags']
+
+                # Replace the following sequences with context values
+                # For example, replace {ip_address} with the private IP address
+                sequences = (
+                    ('{ip_address}', ip_address),
+                    ('{node_name}', node_name),
+                    ('{hostname}', hostname)
+                )
+                for tag in tags:
+                    for sequence in sequences:
+                      tag['Value'] = tag['Value'].replace(*sequence)
+
                 try:
                     request_tags = {
                         'Resources': [instance_id],
