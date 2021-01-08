@@ -418,14 +418,14 @@ Resources:
               EOF
 
               # Set environment variables
-              echo 'SLURM_HOME=/nfs/slurm' | tee /etc/profile.d/slurm.sh
-              echo 'SLURM_CONF=$SLURM_HOME/etc/slurm/slurm.conf' | tee -a /etc/profile.d/slurm.sh
-              echo 'PATH=$SLURM_HOME/bin:$PATH' | tee -a /etc/profile.d/slurm.sh
+              echo 'export SLURM_HOME=/nfs/slurm' | tee /etc/profile.d/slurm.sh
+              echo 'export SLURM_CONF=$SLURM_HOME/etc/slurm.conf' | tee -a /etc/profile.d/slurm.sh
+              echo 'export PATH=/nfs/slurm/bin:$PATH' | tee -a /etc/profile.d/slurm.sh
 
               # Launch Slurmctld
               mkdir -p /var/spool/slurm
-              'cp' $SLURM_HOME/etc/slurm/slurmd.service /lib/systemd/system
-              'cp' $SLURM_HOME/etc/slurm/slurmctld.service /lib/systemd/system
+              'cp' /nfs/slurm/etc/slurm/slurmd.service /lib/systemd/system
+              'cp' /nfs/slurm/etc/slurm/slurmctld.service /lib/systemd/system
               systemctl enable slurmctld
               systemctl start slurmctld
 
