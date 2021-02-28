@@ -157,6 +157,7 @@ Resources:
                   - ec2:TerminateInstances
                   - ec2:CreateTags
                   - ec2:DescribeInstances
+                  - iam:CreateServiceLinkedRole
                 Resource: '*'
               - Effect: Allow
                 Action: iam:PassRole

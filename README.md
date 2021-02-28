@@ -132,10 +132,10 @@ This JSON file specifies the groups of nodes and associated partitions that Slur
 ```
 
 * `Partitions`: List of partitions
-   * `PartitionName`: Name of the partition. Must match the pattern `^[a-zA-Z0-9_]+$`.
+   * `PartitionName`: Name of the partition. Must match the pattern `^[a-zA-Z0-9]+$`.
    * `NodeGroups`: List of node groups for this partition. A node group is a set of nodes that share the same specifications.
-      * `NodeGroupName`: Name of the node group. Must match the pattern `^[a-zA-Z0-9_]+[a-zA-Z_]$`.
-      * `MaxNodes`: Maximum number of nodes that Slurm can launch for this node group. For each node group, `generate_conf.py` will issue a line with `NodeName=[partition_name]-[nodegroup_name][0-(max_nodes-1)]`
+      * `NodeGroupName`: Name of the node group. Must match the pattern `^[a-zA-Z0-9]+$`.
+      * `MaxNodes`: Maximum number of nodes that Slurm can launch for this node group. For each node group, `generate_conf.py` will issue a line with `NodeName=[partition_name]-[nodegroup_name]-[0-(max_nodes-1)]`
       * `Region`: Name of the AWS region where to launch EC2 instances for this node group. Example: `us-east-1`.
       * [OPTIONAL] `ProfileName`: Name of the AWS CLI profile to use to authenticate AWS requests. If you don't specify a profile name, it uses the default profile name of EC2 metadata credentials.
       * `SlurmSpecifications`: List of Slurm configuration attributes for this node group. For example if you provide `{"CPUs": 4, "Features": "us-east-1a"}` the script `generate_conf.py`will output `CPUs=4 Features=us-east-1a` in the configuration line related to this node group.
@@ -146,7 +146,7 @@ This JSON file specifies the groups of nodes and associated partitions that Slur
       * `LaunchTemplateOverrides`: Must be filled in the same way then the object of the same name in the [EC2 CreateFleet API](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Client.create_fleet). Do not populate the field `SubnetId` in template overrides.
       * `SubnetIds`: List of subnets where EC2 instances can be launched for this node group. If you provide multiple subnets, they must be in different availability zones, or the `CreateFleet` request may return the error message "The fleet configuration contains duplicate instance pools".
       * `Tags`: List of tags applied to the EC2 instances launched for this node group.
-        * A tag `Name` is automatically added at launch, whose value is the name of the node `[partition_name]-[nodegroup_name][id]`. You should not delete or override this tag, because the script `suspend.py` uses it to find which instance is associated with the node to suspend.
+        * A tag `Name` is automatically added at launch, whose value is the name of the node `[partition_name]-[nodegroup_name]-[id]`. You should not delete or override this tag, because the script `suspend.py` uses it to find which instance is associated with the node to suspend.
         * You use the sequence `{ip_address}` in the value of tag, it will be replaced with the IP address. Similarly, `{node_name}` will be replaced with the name of the node, `{hostname}` with the EC2 hostname.
 
 Refer to the section **Examples of `partitions.json`** for examples of file content.
@@ -161,10 +161,10 @@ This script is the `ResumeProgram` program executed by Slurm to restore nodes in
 
 * It retrieves the list of nodes to resume, and for each partition and node group:
    * It creates an instant EC2 fleet to launch the requested number of EC2 instances. This call is synchronous and the response contains the list of EC2 instances that were launched. For each instance:
-      * It creates a tag `Name` whose value is the name of the node `[partition_name]-[nodegroup_name][id]` and other tags if specified for this node group.
+      * It creates a tag `Name` whose value is the name of the node `[partition_name]-[nodegroup_name]-[id]` and other tags if specified for this node group.
       * It updates the node IP address and host name in Slurm with `scontrol`.
 
-You can manually try the resume program by running `/fullpath/resume.py (partition_name)-(nodegroup_name)(id)` such as  `/fullpath/resume.py partition-nodegroup0`.
+You can manually try the resume program by running `/fullpath/resume.py (partition_name)-(nodegroup_name)-(id)` such as  `/fullpath/resume.py partition-nodegroup-0`.
 
 ### `suspend.py`
 
@@ -174,7 +174,7 @@ This script is the `SuspendProgram` executed by Slurm to place nodes in power sa
    * It finds the instance ID for this node
    * It terminates the instance
 
-You can manually try the suspend program by running `/fullpath/suspend.py (partition_name)-(nodegroup_name)(id)` such as  `/fullpath/suspend.py partition-nodegroup0`.
+You can manually try the suspend program by running `/fullpath/suspend.py (partition_name)-(nodegroup_name)-(id)` such as  `/fullpath/suspend.py partition-nodegroup-0`.
 
 ### `change_state.py`
 
@@ -257,6 +257,7 @@ ec2:RunInstances
 ec2:TerminateInstances
 ec2:CreateTags
 ec2:DescribeInstances
+iam:CreateServiceLinkedRole (required if you never used EC2 Fleet in your account)
 iam:PassRole (you can restrict this actions to the ARN of the EC2 role for compute nodes)
 ```
 
@@ -280,8 +281,8 @@ ResumeProgram=/slurm/etc/aws/resume.py
 SuspendRate=100
 # ...More Slurm parameters
 
-NodeName=aws-node[0-99] State=CLOUD CPUs=4
-Partition=aws Nodes=aws-node[0-99] Default=No MaxTime=INFINITE State=UP
+NodeName=aws-node-[0-99] State=CLOUD CPUs=4
+Partition=aws Nodes=aws-node-[0-99] Default=No MaxTime=INFINITE State=UP
 ```
 
 8) Change the `cron` configuration to run the script `change_state.py` every minute.
@@ -408,8 +409,8 @@ Single `aws` partition with 2 node groups:
 
 Single `aws` partition with 3 node groups:
 
-* One node group `spot_4vCPU` used by default (lowest Slurm weight) that launches Spot instances with c5.large or c4.large across two subnets in two different availability zones, with the lowest price strategy.
-* Two node groups `spot_4vCPU_a` or `spot_4vCPU_b` that can be used by specifying the feature `us-east-1a` or `us-east-1b` to run a job with all nodes in the same availability zone.
+* One node group `spot4vCPU` used by default (lowest Slurm weight) that launches Spot instances with c5.large or c4.large across two subnets in two different availability zones, with the lowest price strategy.
+* Two node groups `spot4vCPUa` or `spot4vCPUb` that can be used by specifying the feature `us-east-1a` or `us-east-1b` to run a job with all nodes in the same availability zone.
 
 ```
 {
@@ -418,7 +419,7 @@ Single `aws` partition with 3 node groups:
          "PartitionName": "aws",
          "NodeGroups": [
             {
-               "NodeGroupName": "spot_4vCPU",
+               "NodeGroupName": "spot4vCPU",
                "MaxNodes": 100,
                "Region": "us-east-1",
                "SlurmSpecifications": {
@@ -447,7 +448,7 @@ Single `aws` partition with 3 node groups:
                ]
             },
             {
-               "NodeGroupName": "spot_4vCPU_a",
+               "NodeGroupName": "spot4vCPUa",
                "MaxNodes": 100,
                "Region": "us-east-1",
                "SlurmSpecifications": {
@@ -476,7 +477,7 @@ Single `aws` partition with 3 node groups:
                ]
             },
             {
-               "NodeGroupName": "spot_4vCPU_b",
+               "NodeGroupName": "spot4vCPUb",
                "MaxNodes": 100,
                "Region": "us-east-1",
                "SlurmSpecifications": {
@@ -512,7 +513,7 @@ Single `aws` partition with 3 node groups:
 
 ### Example 3
 
-Two partitions `aws` and `aws_spot` with one node group in each. You could use Slurm access permissions to allow "standard" users to use only Spot instances, and "VIP" users to use Spot and On-demand instances.
+Two partitions `aws` and `awsspot` with one node group in each. You could use Slurm access permissions to allow "standard" users to use only Spot instances, and "VIP" users to use Spot and On-demand instances.
 
 ```
 {
@@ -552,7 +553,7 @@ Two partitions `aws` and `aws_spot` with one node group in each. You could use S
          }
       },
       {
-         "PartitionName": "aws_spot",
+         "PartitionName": "awsspot",
          "NodeGroups": [
             {
                "NodeGroupName": "node",
