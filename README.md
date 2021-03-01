@@ -294,7 +294,7 @@ sudo crontab -e
 If the Slurm user is not root, you could create the cron for that user instead `sudo crontab -e -u username`. Add the following line into the file. Make sure to adapt the path `/fullpath/change_state.py` to your own context.
 
 ```
-* * * * * /fullpath/change_state.py
+* * * * * /fullpath/change_state.py &>/dev/null
 ```
 
 <a name="tc_cloudformation"/>

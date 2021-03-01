@@ -377,7 +377,7 @@ Resources:
 
               crontab -l > mycron
               cat > mycron <<EOF
-              * * * * * $SLURM_HOME/etc/aws/change_state.py
+              * * * * * $SLURM_HOME/etc/aws/change_state.py &>/dev/null
               EOF
               crontab mycron
               rm mycron
