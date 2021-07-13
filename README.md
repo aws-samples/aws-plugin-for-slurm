@@ -124,7 +124,11 @@ This JSON file specifies the groups of nodes and associated partitions that Slur
                ]
             },
             ...
-         ]
+         ],
+         "PartitionOptions": {
+            "Option1": "STRING",
+            "Option2": "STRING"
+         }
       },
       ...
    ]
@@ -148,6 +152,7 @@ This JSON file specifies the groups of nodes and associated partitions that Slur
       * `Tags`: List of tags applied to the EC2 instances launched for this node group.
         * A tag `Name` is automatically added at launch, whose value is the name of the node `[partition_name]-[nodegroup_name]-[id]`. You should not delete or override this tag, because the script `suspend.py` uses it to find which instance is associated with the node to suspend.
         * You use the sequence `{ip_address}` in the value of tag, it will be replaced with the IP address. Similarly, `{node_name}` will be replaced with the name of the node, `{hostname}` with the EC2 hostname.
+   * `PartitionOptions`: List of Slurm configuration attributes for the partition (optional).
 
 Refer to the section **Examples of `partitions.json`** for examples of file content.
 
@@ -399,7 +404,10 @@ Single `aws` partition with 2 node groups:
                   }
                ]
             }
-         ]
+         ],
+      "PartitionOptions": {
+         "TRESBillingWeights": "cpu=4"
+         }
       }
    ]
 }
@@ -513,7 +521,7 @@ Single `aws` partition with 3 node groups:
 
 ### Example 3
 
-Two partitions `aws` and `awsspot` with one node group in each. You could use Slurm access permissions to allow "standard" users to use only Spot instances, and "VIP" users to use Spot and On-demand instances.
+Two partitions `aws` and `awsspot` with one node group in each. It uses Slurm access permissions to allow users in the "standard" account to use only Spot instances, and "VIP" account users to use Spot and On-demand instances, but weights the on-demand instances more heavily for accounting purposes.
 
 ```
 {
@@ -523,9 +531,9 @@ Two partitions `aws` and `awsspot` with one node group in each. You could use Sl
          "NodeGroups": [
             {
                "NodeGroupName": "node",
-               "MaxNodes: 100,
+               "MaxNodes": 100,
                "Region": "us-east-1",
-               "SlurmSpecifications: {
+               "SlurmSpecifications": {
                   "CPUs": "4",
                   "Weight": "1"
                },
@@ -550,6 +558,10 @@ Two partitions `aws` and `awsspot` with one node group in each. You could use Sl
                   "subnet-22222222"
                ]
             }
+         ],
+         "PartitionOptions": {
+            "TRESBillingWeights": "cpu=30",
+            "AllowAccounts": "standard,VIP"
          }
       },
       {
@@ -557,9 +569,9 @@ Two partitions `aws` and `awsspot` with one node group in each. You could use Sl
          "NodeGroups": [
             {
                "NodeGroupName": "node",
-               "MaxNodes: 100,
+               "MaxNodes": 100,
                "Region": "us-east-1",
-               "SlurmSpecifications: {
+               "SlurmSpecifications": {
                   "CPUs": "4",
                   "Weight": "1"
                },
@@ -584,6 +596,10 @@ Two partitions `aws` and `awsspot` with one node group in each. You could use Sl
                   "subnet-22222222"
                ]
             }
+         ],
+         "PartitionOptions": {
+            "TRESBillingWeights": "cpu=10",
+            "AllowAccounts": "standard"
          }
       }
    ]

@@ -28,9 +28,14 @@ with open(filename, 'w') as f:
             # Write a line for each node group
             line = 'NodeName=%s State=CLOUD %s' %(nodes, ' '.join(nodegroup_specs))
             f.write('%s\n' %line)
-        
+
+        part_options = ()
+        if 'PartitionOptions' in partition:
+            for key, value in partition['PartitionOptions'].items():
+                part_options += '%s=%s' %(key, value),
+
         # Write a line for each partition
-        line = 'PartitionName=%s Nodes=%s Default=No MaxTime=INFINITE State=UP' %(partition['PartitionName'], ','.join(partition_nodes))
+        line = 'PartitionName=%s Nodes=%s Default=No MaxTime=INFINITE State=UP %s' %(partition['PartitionName'], ','.join(partition_nodes), ' '.join(part_options))
         f.write('%s\n\n' %line)
 
     logger.info('Output file: %s' %filename)
