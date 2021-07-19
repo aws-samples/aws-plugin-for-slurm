@@ -368,12 +368,14 @@ Resources:
               SlurmdLogFile=/var/log/slurmd.log
               DebugFlags=NO_CONF_HASH
               JobCompType=jobcomp/none
+              GresTypes=gpu
               EOF
               sed -i "s|@HEADNODE@|$HOSTNAME|g" $SLURM_HOME/etc/slurm.conf
 
               # Configure the plugin
               $SLURM_HOME/etc/aws/generate_conf.py
               cat $SLURM_HOME/etc/aws/slurm.conf.aws >> $SLURM_HOME/etc/slurm.conf
+              cp $SLURM_HOME/etc/aws/gres.conf.aws $SLURM_HOME/etc/gres.conf
 
               crontab -l > mycron
               cat > mycron <<EOF
