@@ -85,8 +85,6 @@ def validate_partitions(data):
         assert re.match('^[a-zA-Z0-9]+$', partition['PartitionName']), 'root["Partitions"][%s]["PartitionName"] does not match ^[a-zA-Z0-9]+$' %i_partition
         
         assert 'NodeGroups' in partition, 'Missing "NodeGroups" in root["Partitions"][%s]' %i_partition
-        if 'PartitionOptions' in partition:
-            assert isinstance(partition['PartitionOptions'], dict), 'root["Paritions"][%s]["PartitionOptions"] is not a dict' %(i_partition)
         assert isinstance(partition['NodeGroups'], list), 'root["Partitions"][%s]["NodeGroups"] is not an array' %i_partition
         
         for i_nodegroup, nodegroup in enumerate(partition['NodeGroups']):
@@ -112,8 +110,11 @@ def validate_partitions(data):
             
             assert 'SubnetIds' in nodegroup, 'Missing "SubnetIds" in root["Partitions"][%s]["NodeGroups"][%s]' %(i_partition, i_nodegroup)
             assert isinstance(nodegroup['SubnetIds'], list), 'root["Partitions"][%s]["NodeGroups"][%s]["SubnetIds"] is not a dict' %(i_partition, i_nodegroup)
-    
 
+        if 'PartitionOptions' in partition:
+            assert isinstance(partition['PartitionOptions'], dict), 'root["Partitions"][%s]["PartitionOptions"] is not a dict' %(i_partition)
+
+            
 # Create and return logger, config, and partitions variables
 def get_common(scriptname):
     
