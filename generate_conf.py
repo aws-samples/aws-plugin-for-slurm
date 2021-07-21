@@ -5,6 +5,7 @@ import common
 logger, config, partitions = common.get_common('generate_conf')
 
 filename = 'slurm.conf.aws'
+gresfile = 'gres.conf.aws'
 
 # This script generates a file to append to slurm.conf
 with open(filename, 'w') as f:
@@ -39,3 +40,37 @@ with open(filename, 'w') as f:
         f.write('%s\n\n' %line)
 
     logger.info('Output file: %s' %filename)
+
+with open(gresfile, 'w') as g:
+    for partition in partitions:
+        
+        for nodegroup in partition['NodeGroups']:
+            nodes = common.get_node_range(partition, nodegroup)
+            for key, value in nodegroup['SlurmSpecifications'].items():
+                if key.upper() == "GRES": 
+                    # Write a line for each node group with Gres
+                    fields=value.split(':')
+                    if len(fields) == 2:
+                        name=fields[0]
+                        qty=fields[1]
+                        typestring=""
+                    elif len(fields) == 3:
+                        name=fields[0]
+                        typestring="Type=%s" % fields[1]
+                        qty=fields[2]
+                    else:
+                        assert false, "Invalid GRES field in %" % nodegroup
+                    if name.lower() == "gpu":
+                        qty=int(qty)
+                        if qty == 1:
+                            gresfilestring="File=/dev/nvidia[0]"
+                        else:
+                            gresfilestring="File=/dev/nvidia[0-%d]"%(int(qty) - 1)
+                    else:
+                        gresfilestring=""
+
+                    line='NodeName=%s Name=%s %s %s' %(nodes, name, typestring, gresfilestring)
+                    g.write('%s\n' %line)
+
+    logger.info('Output file: %s' %gresfile)
+
