@@ -4,11 +4,11 @@ import common
 
 logger, config, partitions = common.get_common('generate_conf')
 
-filename = 'slurm.conf.aws'
-gresfile = 'gres.conf.aws'
+slurm_filename = 'slurm.conf.aws'
+gres_filename = 'gres.conf.aws'
 
 # This script generates a file to append to slurm.conf
-with open(filename, 'w') as f:
+with open(slurm_filename, 'w') as f:
     
     # Write Slurm configuration parameters
     for item, value in config['SlurmConf'].items():
@@ -39,15 +39,17 @@ with open(filename, 'w') as f:
         line = 'PartitionName=%s Nodes=%s Default=No MaxTime=INFINITE State=UP %s' %(partition['PartitionName'], ','.join(partition_nodes), ' '.join(part_options))
         f.write('%s\n\n' %line)
 
-    logger.info('Output file: %s' %filename)
+    logger.info('Output slurm.conf file: %s' %slurm_filename)
 
-with open(gresfile, 'w') as g:
+# This script generates a file to append to gres.conf
+with open(gres_filename, 'w') as g:
     for partition in partitions:
         
         for nodegroup in partition['NodeGroups']:
             nodes = common.get_node_range(partition, nodegroup)
             for key, value in nodegroup['SlurmSpecifications'].items():
-                if key.upper() == "GRES": 
+                if key.upper() == "GRES":
+
                     # Write a line for each node group with Gres
                     fields=value.split(':')
                     if len(fields) == 2:
@@ -60,7 +62,8 @@ with open(gresfile, 'w') as g:
                         qty=fields[2]
                     else:
                         assert false, "Invalid GRES field in %" % nodegroup
-                    if name.lower() == "gpu":
+
+                    if name.upper() == "GPU":
                         qty=int(qty)
                         if qty == 1:
                             gresfilestring="File=/dev/nvidia[0]"
@@ -72,5 +75,4 @@ with open(gresfile, 'w') as g:
                     line='NodeName=%s Name=%s %s %s' %(nodes, name, typestring, gresfilestring)
                     g.write('%s\n' %line)
 
-    logger.info('Output file: %s' %gresfile)
-
+    logger.info('Output gres.conf file: %s' %gres_filename)
