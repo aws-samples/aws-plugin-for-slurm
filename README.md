@@ -405,9 +405,9 @@ Single `aws` partition with 2 node groups:
                ]
             }
          ],
-      "PartitionOptions": {
-         "Default": "yes",
-         "TRESBillingWeights": "cpu=4"
+         "PartitionOptions": {
+            "Default": "yes",
+            "TRESBillingWeights": "cpu=4"
          }
       }
    ]
