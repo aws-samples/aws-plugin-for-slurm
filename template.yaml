@@ -4,7 +4,7 @@ Description: Deploy an example Slurm headnode with the AWS plugin for Slurm (ver
 Parameters:
   SlurmPackageUrl:
     Type: String
-    Default: https://download.schedmd.com/slurm/slurm-20.02.3.tar.bz2
+    Default: https://download.schedmd.com/slurm/slurm-20.02-latest.tar.bz2
     Description: URL to the Slurm installation package. The filename must be like slurm-*.tar.bz2
 
   PluginPrefixUrl:
@@ -292,7 +292,8 @@ Resources:
                     "SuspendRate": 100,
                     "ResumeTimeout": 300,
                     "SuspendTime": 350,
-                    "TreeWidth": 60000
+                    "TreeWidth": 60000,
+                    "GresTypes": "gpu"
                  }
               }
               EOF
@@ -328,10 +329,10 @@ Resources:
                                 "${Subnet2Id}"
                              ]
                           }
-                       ]
-                    },
-                    "PartitionOptions": {
-                       "Default": "Yes"
+                       ],
+                       "PartitionOptions": {
+                          "Default": "Yes"
+                       }
                     }
                  ]
               }
@@ -371,7 +372,6 @@ Resources:
               SlurmdLogFile=/var/log/slurmd.log
               DebugFlags=NO_CONF_HASH
               JobCompType=jobcomp/none
-              GresTypes=gpu
               EOF
               sed -i "s|@HEADNODE@|$HOSTNAME|g" $SLURM_HOME/etc/slurm.conf
 
@@ -419,6 +419,22 @@ Resources:
               LimitMEMLOCK=infinity
               LimitSTACK=infinity
               Delegate=yes
+              [Install]
+              WantedBy=multi-user.target
+              EOF
+              
+              cat > $SLURM_HOME/etc/slurm/slurmctld.service <<EOF
+              [Unit]
+              Description=Slurm controller daemon
+              After=network.target munge.service
+              ConditionPathExists=/nfs/slurm/etc/slurm.conf
+              [Service]
+              Type=forking
+              EnvironmentFile=-/etc/sysconfig/slurmctld
+              ExecStart=/nfs/slurm/sbin/slurmctld \$SLURMCTLD_OPTIONS
+              ExecReload=/bin/kill -HUP \$MAINPID
+              PIDFile=/var/run/slurmctld.pid
+              LimitNOFILE=65536
               [Install]
               WantedBy=multi-user.target
               EOF
