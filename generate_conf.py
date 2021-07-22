@@ -36,7 +36,7 @@ with open(slurm_filename, 'w') as f:
                 part_options += '%s=%s' %(key, value),
 
         # Write a line for each partition
-        line = 'PartitionName=%s Nodes=%s Default=No MaxTime=INFINITE State=UP %s' %(partition['PartitionName'], ','.join(partition_nodes), ' '.join(part_options))
+        line = 'PartitionName=%s Nodes=%s MaxTime=INFINITE State=UP %s' %(partition['PartitionName'], ','.join(partition_nodes), ' '.join(part_options))
         f.write('%s\n\n' %line)
 
     logger.info('Output slurm.conf file: %s' %slurm_filename)
