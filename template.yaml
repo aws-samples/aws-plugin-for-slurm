@@ -4,7 +4,7 @@ Description: Deploy an example Slurm headnode with the AWS plugin for Slurm (ver
 Parameters:
   SlurmPackageUrl:
     Type: String
-    Default: https://download.schedmd.com/slurm/slurm-20.02-latest.tar.bz2
+    Default: https://download.schedmd.com/slurm/slurm-21.08.6.tar.bz2
     Description: URL to the Slurm installation package. The filename must be like slurm-*.tar.bz2
 
   PluginPrefixUrl:
@@ -234,7 +234,7 @@ Resources:
               yum update -y
               yum install nfs-utils python2 python2-pip python3 python3-pip -y
               yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-              yum install munge munge-libs munge-devel openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad rpm-build -y
+              yum install munge munge-libs munge-devel openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad rpm-build libyaml http-parser-devel json-c-devel perl-devel -y
               yum groupinstall "Development Tools" -y
               pip3 install boto3
               pip3 install awscli
@@ -264,6 +264,7 @@ Resources:
               /home/ec2-user/slurm-*/configure --prefix=/nfs/slurm
               make -j 4
               make install
+              make install-contrib
               sleep 5
               export SLURM_HOME=/nfs/slurm
               mkdir -p $SLURM_HOME/etc/slurm
