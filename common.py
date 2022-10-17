@@ -7,6 +7,11 @@ import sys
 
 import boto3
 
+# set to use proxy and AWS credentials
+# os.environ["https_proxy"] = "https://user:password@proxy-server:port"
+# os.environ["AWS_ACCESS_KEY_ID"] = ""
+# os.environ["AWS_SECRET_ACCESS_KEY"] = ""
+
 
 dir_path = os.path.dirname(os.path.realpath(__file__))  # Folder where resides the Python files
 
@@ -142,6 +147,7 @@ def get_common(scriptname):
     
     # Create a logger
     logger = get_logger(scriptname, config['LogLevel'], config['LogFileName'])
+    # comment to reduce output
     logger.debug('Config: %s' %json.dumps(config, indent=4))
     
     # Validate the structure of config.json
@@ -171,6 +177,7 @@ def get_common(scriptname):
         sys.exit(1)
     finally:
         partitions = partitions_json['Partitions']
+        # comment to reduce output
         logger.debug('Partitions: %s' %json.dumps(partitions_json, indent=4))
     
     return logger, config, partitions
