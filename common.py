@@ -224,13 +224,13 @@ def get_node_range(partition, nodegroup, nb_nodes=None):
             if config['NodeNameStartsWithNodeGroupName']:
                 digits=len(str(nb_nodes))
                 return '%s[%s-%s]' %(get_node_name(partition, nodegroup),str(1).zfill(digits),nb_nodes)
-            else
+            else:
                 return '%s-[1-%s]' %(get_node_name(partition, nodegroup), nb_nodes)
         else:
             if config['NodeNameStartsWithNodeGroupName']:
                 digits=len(str(nb_nodes))
                 return '%s[%s-%s]' %(get_node_name(partition, nodegroup),str(0).zfill(digits),nb_nodes-1)
-            else
+            else:
                 return '%s-[0-%s]' %(get_node_name(partition, nodegroup), nb_nodes-1)
     else:
         return '%s-0' %(get_node_name(partition, nodegroup))
