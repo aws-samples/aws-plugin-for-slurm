@@ -13,6 +13,10 @@ import boto3
 # os.environ["AWS_SECRET_ACCESS_KEY"] = ""
 
 
+
+
+
+
 dir_path = os.path.dirname(os.path.realpath(__file__))  # Folder where resides the Python files
 
 logger = None  # Global variable for the logging.Logger object
@@ -198,11 +202,17 @@ def get_node_name(partition, nodegroup, node_id=''):
         nodegroup_name = nodegroup['NodeGroupName']
     else:
         nodegroup_name = nodegroup
-    
-    if node_id == '':
-        return '%s-%s' %(partition_name, nodegroup_name)
-    else:
-        return '%s-%s-%s' %(partition_name, nodegroup_name, node_id)
+
+    if config['NodeNameStartsWithNodeGroupName']:
+        if node_id == '':
+            return '%s' %(nodegroup_name)
+        else:
+            return '%s%s' %(nodegroup_name, node_id)
+    else
+        if node_id == '':
+            return '%s-%s' %(partition_name, nodegroup_name)
+        else:
+            return '%s-%s-%s' %(partition_name, nodegroup_name, node_id)
     
 
 # Return the name of a node [partition_name]-[nodegroup_name][id]
@@ -215,7 +225,18 @@ def get_node_range(partition, nodegroup, nb_nodes=None):
         nb_nodes = nodegroup['MaxNodes']
         
     if nb_nodes > 1:
-        return '%s-[0-%s]' %(get_node_name(partition, nodegroup), nb_nodes-1)
+        if config['NodeNameStartsFrom1']:
+            if config['NodeNameStartsWithNodeGroupName']:
+                digits=len(str(nb_nodes))
+                return '%s[%s-%s]' %(get_node_name(partition, nodegroup),str(1).zfill(digits),nb_nodes)
+            else
+                return '%s-[1-%s]' %(get_node_name(partition, nodegroup), nb_nodes)
+        else
+            if config['NodeNameStartsWithNodeGroupName']:
+                digits=len(str(nb_nodes))
+                return '%s[%s-%s]' %(get_node_name(partition, nodegroup),str(0).zfill(digits),nb_nodes-1)
+            else
+                return '%s-[0-%s]' %(get_node_name(partition, nodegroup), nb_nodes-1)
     else:
         return '%s-0' %(get_node_name(partition, nodegroup))
 
@@ -248,14 +269,23 @@ def expand_hostlist(hostlist):
 # Take a list of node names in input and return a dict with result[partition_name][nodegroup_name] = list of node ids
 def parse_node_names(node_names):
     result = {}
+
+    if config['NodeNameStartsWithNodeGroupName']:
+        groups = 2
+        pattern = '^([-a-zA-Z0-9]+[-a-zA-z])([0-9]+)$'
+    else
+        pattern = '^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)$'
+
     for node_name in node_names:
         
-        # For each node: extract partition name, node group name and node id
-        pattern = '^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)$'
         match = re.match(pattern, node_name)
         if match:
-            partition_name, nodegroup_name, node_id = match.groups()
-            
+            if groups == 2:
+                nodegroup_name, node_id = match.groups()
+                partition_name = get_partition_name(nodegroup_name)
+            else
+                partition_name, nodegroup_name, node_id = match.groups() 
+
             # Add to result
             if not partition_name in result:
                 result[partition_name] = {}
@@ -276,6 +306,16 @@ def get_partition_nodegroup(partition_name, nodegroup_name):
                     return nodegroup
     
     # Return None if it does not exist
+    return None
+
+# Return partition name based on node group name
+def get_partition_name(nodegroup_name):
+
+    for partition in partitions:
+        for nodegroup in partition['NodeGroups']:
+            if nodegroup['NodeGroupName'] == nodegroup_name:
+                return partition['PartitionName']
+    # ReturnNone if it doesn't exist
     return None
 
 
