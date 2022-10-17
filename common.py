@@ -12,11 +12,6 @@ import boto3
 # os.environ["AWS_ACCESS_KEY_ID"] = ""
 # os.environ["AWS_SECRET_ACCESS_KEY"] = ""
 
-
-
-
-
-
 dir_path = os.path.dirname(os.path.realpath(__file__))  # Folder where resides the Python files
 
 logger = None  # Global variable for the logging.Logger object
@@ -208,7 +203,7 @@ def get_node_name(partition, nodegroup, node_id=''):
             return '%s' %(nodegroup_name)
         else:
             return '%s%s' %(nodegroup_name, node_id)
-    else
+    else:
         if node_id == '':
             return '%s-%s' %(partition_name, nodegroup_name)
         else:
