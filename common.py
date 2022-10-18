@@ -19,11 +19,6 @@ logger = None  # Global variable for the logging.Logger object
 config = None  # Global variable for the config parameters
 partitions = None  # Global variable that stores partitions details
 
-arguments = [ 'show', 'config', '|', 'grep', 'SlurmctldHost', '|', 'wc', '-l']  
-out = run_scommand('scontrol',arguments)
-print(out)
-
-
 # Create and return a logging.Logger object
 # - scriptname: name of the module
 # - levelname: log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -350,3 +345,8 @@ def get_ec2_client(nodegroup):
             sys.exit(1)
     else:
         return boto3.client('ec2', region_name=nodegroup['Region'])
+
+
+arguments = [ 'show', 'config', '|', 'grep', 'SlurmctldHost', '|', 'wc', '-l']  
+out = run_scommand('scontrol',arguments)
+print(out)
