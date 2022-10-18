@@ -268,7 +268,7 @@ def parse_node_names(node_names):
     if config['NodeNameStartsWithNodeGroupName']:
         groups = 2
         pattern = '^([-a-zA-Z0-9]+[-a-zA-z])([0-9]+)$'
-    else
+    else:
         pattern = '^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)$'
 
     for node_name in node_names:
@@ -278,7 +278,7 @@ def parse_node_names(node_names):
             if groups == 2:
                 nodegroup_name, node_id = match.groups()
                 partition_name = get_partition_name(nodegroup_name)
-            else
+            else:
                 partition_name, nodegroup_name, node_id = match.groups() 
 
             # Add to result
