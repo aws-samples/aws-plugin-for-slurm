@@ -21,7 +21,7 @@ partitions = None  # Global variable that stores partitions details
 
 arguments = [ 'show', 'config', '|', 'grep', 'SlurmctldHost', '|', 'wc', '-l']  
 out = run_scommand('scontrol',arguments)
-print out
+print(out)
 
 
 # Create and return a logging.Logger object
