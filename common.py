@@ -345,8 +345,3 @@ def get_ec2_client(nodegroup):
             sys.exit(1)
     else:
         return boto3.client('ec2', region_name=nodegroup['Region'])
-
-
-arguments = [ 'show', 'config', '|', 'grep', 'SlurmctldHost', '|', 'wc', '-l']  
-out = run_scommand('scontrol',arguments)
-print(out)
