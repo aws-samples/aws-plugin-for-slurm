@@ -43,6 +43,8 @@ This JSON file specifies the plugin and Slurm configuration parameters.
    "LogLevel": "STRING",
    "LogFileName": "STRING",
    "SlurmBinPath": "STRING",
+   "NodeNameStartsFrom1": "STRING",
+   "NodeNameStartsWithNodeGroupName": "STRING",
    "SlurmConf": {
       "PrivateData": "STRING",
       "ResumeProgram": "STRING",
@@ -60,6 +62,8 @@ This JSON file specifies the plugin and Slurm configuration parameters.
 * `LogLevel`: Logging level. Possible values are `CRITICAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`. Default is `DEBUG`.
 * `LogFileName`: Full path to the log file location. Default is `PLUGIN_PATH\aws_plugin.log`.
 * `SlurmBinPath`: Full path to the folder that contains Slurm binaries like `scontrol` or `sinfo`. Example: `/slurm/bin`.
+* `NodeNameStartsFrom1`: Optional. By default node number starts from 0, like aws-c5_24xlarge-0. This flag changes this behavior to start from 0.
+* `NodeNameStartsWithNodeGroupName`: Optional. By default node name starts with partition name followed by "-". This flag changes this behavior to allow node names be node group name followed by a number like: c5_24xlarge001.
 * `SlurmConf`: These attributes are used by `generate_conf.py` to generate the content that must be appended to the Slurm configuration file. You must specify at least the following attributes:
    * `PrivateData`: Must be equal to `CLOUD` such that EC2 compute nodes that are idle are returned by Slurm command outputs such as `sinfo`.
    * `ResumeProgram`: Full path to the location of `resume.py`. Example: `/slurm/etc/aws/resume.py`.
