@@ -43,8 +43,8 @@ This JSON file specifies the plugin and Slurm configuration parameters.
    "LogLevel": "STRING",
    "LogFileName": "STRING",
    "SlurmBinPath": "STRING",
-   "NodeNameStartsFrom1": "STRING",
-   "NodeNameStartsWithNodeGroupName": "STRING",
+   "NodeNameStartsFrom1": BOOLEAN,
+   "NodeNameStartsWithNodeGroupName": BOOLEAN,
    "SlurmConf": {
       "PrivateData": "STRING",
       "ResumeProgram": "STRING",
