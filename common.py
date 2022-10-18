@@ -12,11 +12,16 @@ import boto3
 # os.environ["AWS_ACCESS_KEY_ID"] = ""
 # os.environ["AWS_SECRET_ACCESS_KEY"] = ""
 
+
 dir_path = os.path.dirname(os.path.realpath(__file__))  # Folder where resides the Python files
 
 logger = None  # Global variable for the logging.Logger object
 config = None  # Global variable for the config parameters
 partitions = None  # Global variable that stores partitions details
+
+arguments = [ 'show', 'config', '|', 'grep', 'SlurmctldHost', '|', 'wc', '-l']  
+out = run_scommand('scontrol',arguments)
+print out
 
 
 # Create and return a logging.Logger object
