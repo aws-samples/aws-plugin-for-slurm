@@ -345,3 +345,25 @@ def get_ec2_client(nodegroup):
             sys.exit(1)
     else:
         return boto3.client('ec2', region_name=nodegroup['Region'])
+
+
+def check_ha():
+    args = ['show', 'config']
+    out = run_scommand('scontrol', args)
+    ctld_hosts = 0
+    for line in out:
+        if 'SlurmctldHost' in line:
+            ctld_hosts += 1
+        if 'ClusterName' in line:
+            cluster_name = line.split('= ')[-1] # get last list element
+    if ctld_hosts > 1:
+        args = ['show', 'cluster', cluster_name]
+        out = run_scommand('sacctmgr', args)
+        for line in out:
+            if cluster_name in line:
+                primary_ip = re.sub(r'([ ])(\1+)', r'\1', line).split(' ')[2]
+                hostname = socket.gethostname()
+                host_ip = socket.gethostbyname(hostname)
+                if primary_ip != host_ip:
+                    logger.info('This host is not the primary slurmctld. Exiting...')
+                    sys.exit(1)
