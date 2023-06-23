@@ -120,14 +120,8 @@ Resources:
             Principal:
               Service: ec2.amazonaws.com
             Action: sts:AssumeRole
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: ec2:DescribeTags
-                Resource: '*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 
   ComputeNodeInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -162,6 +156,8 @@ Resources:
               - Effect: Allow
                 Action: iam:PassRole
                 Resource: !GetAtt [ ComputeNodeRole, Arn ]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 
   HeadNodeInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -184,6 +180,8 @@ Resources:
         ImageId: !Ref LatestAmiId
         IamInstanceProfile:
           Arn: !GetAtt [ ComputeNodeInstanceProfile, Arn ]
+        MetadataOptions:
+          InstanceMetadataTags: enabled
         SecurityGroupIds:
           - !GetAtt [ SecurityGroup, GroupId ]
         UserData:
@@ -390,11 +388,9 @@ Resources:
 
               # Get dynamically the node name when launching slurmd
               cat > $SLURM_HOME/etc/aws/get_nodename <<'EOF'
-              instanceid=`/usr/bin/curl --fail -m 2 -s 169.254.169.254/latest/meta-data/instance-id`
+              instanceid=`/usr/bin/curl --fail -m 2 -s http://169.254.169.254/latest/meta-data/instance-id`
               if [[ ! -z "$instanceid" ]]; then
-                 region=`/usr/bin/curl -s 169.254.169.254/latest/meta-data/placement/availability-zone`
-                 region=${!region::-1}
-                 hostname=`/usr/bin/aws ec2 describe-tags --filters "Name=resource-id,Values=$instanceid" "Name=key,Values=Name" --region $region --query "Tags[0].Value" --output=text`
+                 hostname=`/usr/bin/curl -s http://169.254.169.254/latest/meta-data/tags/instance/Name`
               fi
               if [ ! -z "$hostname" -a "$hostname" != "None" ]; then
                  echo $hostname
