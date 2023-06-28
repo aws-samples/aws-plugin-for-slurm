@@ -201,15 +201,13 @@ This script is used to generate the Slurm configuration that is specific to this
 
 * **Important**: The compute nodes must specify their cluster name when launching `slurmd`. The cluster name can be retrieved from the EC2 instance tag. If you use `systemctl` to launch Slurm, here is what you could do to automatically pass the node name when compute nodes start `slurmd`:
 
-Create a script that returns the node name from the EC2 tag, or the hostname if the tag value cannot be retrieved. You must have the AWS CLI installed to run this script, and you must attach an IAM role to the EC2 compute nodes that grants `ec2:DescribeInstances`. Adapt the full path of the script `/fullpath/get_nodename` to your own context:
+Create a script that returns the node name from the EC2 tag, or the hostname if the tag value cannot be retrieved. You must have the AWS CLI installed to run this script, and you must allow access to tags in instance metadata by setting `InstanceMetadataTags` to `enabled`. Adapt the full path of the script `/fullpath/get_nodename` to your own context:
 
 ```
 cat > /fullpath/get_nodename <<'EOF'
 instanceid=`/usr/bin/curl --fail -m 2 -s 169.254.169.254/latest/meta-data/instance-id`
 if [[ ! -z "$instanceid" ]]; then
-   region=`/usr/bin/curl -s 169.254.169.254/latest/meta-data/placement/availability-zone`
-   region=${region::-1}
-   hostname=`/usr/bin/aws ec2 describe-tags --filters "Name=resource-id,Values=$instanceid" "Name=key,Values=Name" --region $region --query "Tags[0].Value" --output=text`
+   hostname=`/usr/bin/curl -s http://169.254.169.254/latest/meta-data/tags/instance/Name`
 fi
 if [ ! -z "$hostname" -a "$hostname" != "None" ]; then
    echo $hostname
