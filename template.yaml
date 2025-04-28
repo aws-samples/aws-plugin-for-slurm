@@ -30,7 +30,7 @@ Parameters:
 
   LatestAmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 # AL2023 ami
 
   HeadNodeInstanceType:
     Type: String
@@ -47,6 +47,12 @@ Parameters:
     Default: 2
     Description: Number of vCPUs for the compute node instance type
 
+  ComputeNodeMemory:
+    Type: Number
+    Default: 4
+    Description: Amount of memory for the compute instance type in GB
+
+
 Metadata: 
   AWS::CloudFormation::Interface: 
     ParameterGroups: 
@@ -62,6 +68,7 @@ Metadata:
           - HeadNodeInstanceType
           - ComputeNodeInstanceType
           - ComputeNodeCPUs
+          - ComputeNodeMemory
           - KeyPair
           - LatestAmiId
       - Label: 
@@ -82,10 +89,12 @@ Metadata:
         default: Compute Node Instance Type
       ComputeNodeCPUs: 
         default: Compute Node vCPUs
+      ComputeNodeMemory:
+        default: Compute Node memory
       KeyPair: 
         default: Key Pair
       LatestAmiId: 
-        default: Latest Amazon Linux 2 AMI ID
+        default: Latest Amazon Linux 2023 AMI ID
       SlurmPackageUrl: 
         default: Slurm Package URL
       PluginPrefixUrl: 
@@ -188,8 +197,10 @@ Resources:
           Fn::Base64:
             !Sub |
               #!/bin/bash -x
-              amazon-linux-extras install epel -y
-              yum install munge munge-libs munge-devel -y
+              # Install packages
+              dnf update -y
+              dnf install nfs-utils python3 python3-pip -y
+              dnf install munge munge-libs munge-devel -y
 
               echo "welcometoslurmamazonuserwelcometoslurmamazonuserwelcometoslurmamazonuser" | tee /etc/munge/munge.key
               chown munge:munge /etc/munge/munge.key
@@ -200,7 +211,7 @@ Resources:
               systemctl start munge
               sleep 15
 
-              yum install openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad rpm-build -y
+              dnf install openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel libibmad libibumad rpm-build -y
 
               mkdir -p /nfs
               mount -t nfs ${HeadNodeNetworkInterface.PrimaryPrivateIpAddress}:/nfs /nfs
@@ -229,20 +240,19 @@ Resources:
             !Sub |
               #!/bin/bash -x
               # Install packages
-              yum update -y
-              yum install nfs-utils python2 python2-pip python3 python3-pip -y
-              amazon-linux-extras install epel -y
-              yum install munge munge-libs munge-devel openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad rpm-build libyaml http-parser-devel json-c-devel perl-devel -y
-              yum groupinstall "Development Tools" -y
+              dnf update -y
+              dnf install nfs-utils python3 python3-pip -y
+              dnf install munge munge-libs munge-devel openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel libibmad libibumad rpm-build libyaml json-c-devel perl-devel -y
+              dnf groupinstall "Development Tools" -y
               pip3 install boto3
               pip3 install awscli
 
               # Configure NFS share
               mkdir -p /nfs
               echo "/nfs *(rw,async,no_subtree_check,no_root_squash)" | tee /etc/exports
-              systemctl enable nfs
-              systemctl start nfs
-              exportfs -av
+              systemctl enable --now nfs-server rpcbind
+              systemctl restart nfs-server
+              sudo exportfs -arv
 
               # Configure Munge
               echo "welcometoslurmamazonuserwelcometoslurmamazonuserwelcometoslurmamazonuser" | tee /etc/munge/munge.key
@@ -257,10 +267,10 @@ Resources:
               # Install Slurm
               cd /home/ec2-user/
               wget -q ${SlurmPackageUrl}
-              tar -xvf /home/ec2-user/slurm-*.tar.bz2 -C /home/ec2-user
-              cd /home/ec2-user/slurm-*
-              /home/ec2-user/slurm-*/configure --prefix=/nfs/slurm
-              make -j 4
+              tar -xf slurm-*.tar.bz2
+              cd "$(ls -d /home/ec2-user/slurm-* | grep -v '.tar.bz2')"
+              ./configure --prefix=/nfs/slurm
+              make -j $(nproc)
               make install
               make install-contrib
               sleep 5
@@ -308,7 +318,8 @@ Resources:
                              "MaxNodes": 100,
                              "Region": "${AWS::Region}",
                              "SlurmSpecifications": {
-                                "CPUs": "${ComputeNodeCPUs}"
+                                "CPUs": "${ComputeNodeCPUs}",
+                                "RealMemory": "${ComputeNodeMemory}"
                              },
                              "PurchasingOption": "on-demand",
                              "OnDemandOptions": {
@@ -377,8 +388,12 @@ Resources:
               # Configure the plugin
               $SLURM_HOME/etc/aws/generate_conf.py
               cat $SLURM_HOME/etc/aws/slurm.conf.aws >> $SLURM_HOME/etc/slurm.conf
-              cp $SLURM_HOME/etc/aws/gres.conf.aws $SLURM_HOME/etc/gres.conf
+              cp $SLURM_HOME/etc/aws/gres.conf.aws $SLURM_HOME/etc/gres.conf  # GPU's
 
+              # install cronie package
+              dnf install cronie -y
+              systemctl enable crond.service
+              systemctl start crond.service
               crontab -l > mycron
               cat > mycron <<EOF
               * * * * * $SLURM_HOME/etc/aws/change_state.py &>/dev/null
