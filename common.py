@@ -135,7 +135,11 @@ def get_common(scriptname):
         config['LogFileName'] = '%s/aws_plugin.log' %dir_path
     if not 'LogLevel' in config:
         config['LogLevel'] = 'DEBUG'
-
+    if not 'EnableIPv6' in config:
+        config['EnableIPv6'] = '0'
+    if not 'UseNodeName' in config:
+        config['UseNodeName'] = '0'
+        
     # Make sure that SlurmBinPath ends with a /
     if 'SlurmBinPath' in config and not config['SlurmBinPath'].endswith('/'):
         config['SlurmBinPath'] += '/'

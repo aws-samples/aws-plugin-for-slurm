@@ -120,9 +120,18 @@ for partition_name, nodegroups in nodes_to_resume.items():
                 for reservation in response_describe['Reservations']:
                     for instance_details in reservation['Instances']:
                         if instance_details['InstanceId'] == instance_id:
-                            ip_address = instance_details['PrivateIpAddress']
-                            hostname = 'ip-%s' %'-'.join(ip_address.split('.'))
-                            
+                            if config['EnableIPv6'] == "1":
+                                ip_address = instance_details['Ipv6Address']
+                                hostname = 'ip-%s' %'-'.join(instance_details['PrivateIpAddress'].split('.'))
+                                if ip_address == '':
+                                    logger.critical('IPv6 is enabled but I was unable to find an IPv6 IP')
+                                    sys.exit(1)
+                            else:
+                                ip_address = instance_details['PrivateIpAddress']
+                                hostname = 'ip-%s' %'-'.join(ip_address.split('.'))
+                            if config['UseNodeName'] == '1':
+                                hostname = node_name                                
+                                
                 logger.info('Launched node %s %s %s' %(node_name, instance_id, ip_address))
                 
                 # Tag the instance
