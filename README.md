@@ -201,7 +201,7 @@ This script is used to generate the Slurm configuration that is specific to this
 
 * **Important**: The compute nodes must specify their cluster name when launching `slurmd`. The cluster name can be retrieved from the EC2 instance tag. If you use `systemctl` to launch Slurm, here is what you could do to automatically pass the node name when compute nodes start `slurmd`:
 
-Create a script that returns the node name from the EC2 tag, or the hostname if the tag value cannot be retrieved. You must have the AWS CLI installed to run this script, and you must allow access to tags in instance metadata by setting `InstanceMetadataTags` to `enabled`. Adapt the full path of the script `/fullpath/get_nodename` to your own context:
+Create a script that returns the node name from the EC2 tag, or the hostname if the tag value cannot be retrieved. You must have the AWS CLI installed to run this script, and you must [allow access to tags in instance metadata](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/work-with-tags-in-IMDS.html#allow-access-to-tags-in-IMDS) by setting `InstanceMetadataTags` to `enabled` in the instance Launch Template. Adapt the full path of the script `/fullpath/get_nodename` to your own context:
 
 ```
 cat > /fullpath/get_nodename <<'EOF'
