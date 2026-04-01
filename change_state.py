@@ -36,7 +36,7 @@ for line in lines:
     line_split = [i for i in line.split(' ') if '=' in i]
     node_attributes = {i.split('=')[0]: i.split('=')[1] for i in line_split}
     node_name = node_attributes['NodeName']
-    node_states = node_attributes['State'].split('+')  # A node should have multiple states like IDLE+CLOUD+POWER
+    node_states = node_attributes['State'].split('+')  # A node should have multiple states like IDLE+CLOUD+POWERED_DOWN
 
     # Power down nodes that are stuck in DOWN* or IDLE* state (node is not responding)
     if 'DOWN*' in node_states or 'IDLE*' in node_states:
@@ -48,13 +48,13 @@ for line in lines:
         change_state(node_name, 'DOWN', reason='node_stuck')
 
     # If the node is DOWN and in power saving mode, set the node to IDLE
-    if 'DOWN' in node_states and 'POWER' in node_states:
+    if 'DOWN' in node_states and any('POWER' in s for s in node_states):
         change_state(node_name, 'IDLE')
 
     # If the node is DOWN but still up, power down the node
-    if 'DOWN' in node_states and not 'POWER' in node_states:
+    if 'DOWN' in node_states and not any('POWER' in s for s in node_states):
         change_state(node_name, 'POWER_DOWN', reason='node_stuck')
 
     # If the node is in power saving mode but still draining, set the node to UNDRAIN
-    if 'DRAIN' in node_states and 'POWER' in node_states:
+    if 'DRAIN' in node_states and any('POWER' in s for s in node_states):
         change_state(node_name, 'UNDRAIN')
