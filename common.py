@@ -273,11 +273,19 @@ def get_partition_nodegroup(partition_name, nodegroup_name):
 
 
 # Use 'scontrol update node' to update nodes
+# Raises an exception if scontrol exits with a non-zero return code so that
+# callers (e.g. change_state.py) receive an accurate signal on failure rather
+# than silently proceeding as if the update succeeded.
 def update_node(node_name, parameters):
     
     parameters_split = parameters.split(' ')
-    arguments = ['update', 'nodename=%s' %node_name] + parameters_split
-    run_scommand('scontrol', arguments)
+    scommand_path = '%s%s' %(config['SlurmBinPath'], 'scontrol')
+    cmd = [scommand_path, 'update', 'nodename=%s' %node_name] + parameters_split
+    logger.debug('Command scontrol: %s' %' '.join(cmd))
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, stderr = proc.communicate()
+    if proc.returncode != 0:
+        raise Exception('scontrol update failed (exit %d): %s' %(proc.returncode, stderr.decode().strip()))
     
     
 # Call sinfo and return node status for a list of nodes
